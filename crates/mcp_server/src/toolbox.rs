@@ -29,7 +29,8 @@ impl Toolbox for ServerToolbox {
     }
 
     async fn send(&self, req: SendRequest) -> Result<TxResult> {
-        self.adapter.send_eth(&req).await
+        let result = self.adapter.send_eth(&req).await?;
+        Ok(result)
     }
 }
 

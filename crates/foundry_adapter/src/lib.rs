@@ -1,4 +1,6 @@
-use anyhow::{anyhow, Result};
+mod error;
+use anyhow::anyhow;
+use error::AdapterError;
 use domain::{Address, AddressOrEns, BalanceRequest, CodeRequest, Erc20BalanceRequest, SendRequest, TxResult};
 use ethers_contract::Contract;
 use ethers_core::abi::parse_abi_str;
@@ -25,9 +27,9 @@ pub struct FoundryAdapter {
 }
 
 impl FoundryAdapter {
-    pub async fn new(rpc_url: impl Into<String>) -> Result<Self> {
+    pub async fn new(rpc_url: impl Into<String>) -> Result<Self, AdapterError> {
         let rpc_url = rpc_url.into();
-        let provider = Provider::<Http>::try_from(rpc_url.clone())?;
+        let provider = Provider::<Http>::try_from(rpc_url.clone()).map_err(|e| AdapterError::Other(e.into()))?;
         let mut known_wallets = HashMap::new();
         known_wallets.insert(
             normalize("0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"),
@@ -50,10 +52,10 @@ impl FoundryAdapter {
         self
     }
 
-    pub async fn resolve_address_or_ens(&self, input: &AddressOrEns) -> Result<Address> {
+    pub async fn resolve_address_or_ens(&self, input: &AddressOrEns) -> Result<Address, AdapterError> {
         match input {
             AddressOrEns::Address(addr) => {
-                let parsed = EthAddress::from_str(addr.as_str())?;
+                let parsed = EthAddress::from_str(addr.as_str()).map_err(|_| AdapterError::AddrParse(addr.as_str().into()))?;
                 let checksum = to_checksum(&parsed, None);
                 Ok(Address::new(format!("0x{}", checksum.trim_start_matches("0x"))))
             }
@@ -65,44 +67,45 @@ impl FoundryAdapter {
         }
     }
 
-    pub async fn get_balance(&self, req: &BalanceRequest) -> Result<String> {
+    pub async fn get_balance(&self, req: &BalanceRequest) -> Result<String, AdapterError> {
         let addr = self.resolve_address_or_ens(req.who()).await?;
-        let addr = EthAddress::from_str(addr.as_str())?;
+        let addr = EthAddress::from_str(addr.as_str()).map_err(|_| AdapterError::AddrParse(addr.as_str().into()))?;
         let bal: U256 = self.provider.get_balance(addr, None).await?;
         Ok(bal.to_string())
     }
 
-    pub async fn get_code_len(&self, req: &CodeRequest) -> Result<(bool, u64)> {
-        let addr = EthAddress::from_str(req.addr().as_str())?;
+    pub async fn get_code_len(&self, req: &CodeRequest) -> Result<(bool, u64), AdapterError> {
+        let addr = EthAddress::from_str(req.addr().as_str()).map_err(|_| AdapterError::AddrParse(req.addr().as_str().into()))?;
         let code: Bytes = self.provider.get_code(addr, None).await?;
         let len = code.0.len() as u64;
         Ok((len > 0, len))
     }
 
-    pub async fn erc20_balance_of(&self, req: &Erc20BalanceRequest) -> Result<String> {
-        let token = EthAddress::from_str(req.token().as_str())?;
-        let holder = EthAddress::from_str(req.holder().as_str())?;
-        let abi = parse_abi_str("[function balanceOf(address) view returns (uint256)]")?;
+    pub async fn erc20_balance_of(&self, req: &Erc20BalanceRequest) -> Result<String, AdapterError> {
+        let token = EthAddress::from_str(req.token().as_str()).map_err(|_| AdapterError::AddrParse(req.token().as_str().into()))?;
+        let holder = EthAddress::from_str(req.holder().as_str()).map_err(|_| AdapterError::AddrParse(req.holder().as_str().into()))?;
+        let abi = parse_abi_str("[function balanceOf(address) view returns (uint256)]").map_err(|e| AdapterError::Other(e.into()))?;
         let contract = Contract::new(token, abi, self.provider.clone().into());
-        let amount: U256 = contract.method::<_, U256>("balanceOf", holder)?.call().await?;
+        let method = contract.method::<_, U256>("balanceOf", holder).map_err(|e| AdapterError::Other(e.into()))?;
+        let amount: U256 = method.call().await.map_err(|e| AdapterError::Other(e.into()))?;
         Ok(amount.to_string())
     }
 
-    pub async fn send_eth(&self, req: &SendRequest) -> Result<TxResult> {
+    pub async fn send_eth(&self, req: &SendRequest) -> Result<TxResult, AdapterError> {
         if let Some(expected) = self.expected_chain_id {
             let chain_id = self.provider.get_chainid().await?.as_u64();
             if chain_id != expected {
-                return Err(anyhow!("unexpected chain id: got {} expected {}", chain_id, expected));
+                return Err(AdapterError::ChainIdMismatch { got: chain_id, expected });
             }
         }
-        let from_addr = EthAddress::from_str(req.from().as_str())?;
-        let to_addr = EthAddress::from_str(req.to().as_str())?;
-        let value = parse_ether(req.amount_eth())?;
+        let from_addr = EthAddress::from_str(req.from().as_str()).map_err(|_| AdapterError::AddrParse(req.from().as_str().into()))?;
+        let to_addr = EthAddress::from_str(req.to().as_str()).map_err(|_| AdapterError::AddrParse(req.to().as_str().into()))?;
+        let value = parse_ether(req.amount_eth()).map_err(|e| AdapterError::Other(e.into()))?;
         let base = TransactionRequest::new().from(from_addr).to(to_addr).value(value);
         let mut typed: TypedTransaction = base.into();
         let est = self.provider.estimate_gas(&typed, None).await?;
         if est.as_u64() > self.gas_cap {
-            return Err(anyhow!("estimated gas {} exceeds cap {}", est, self.gas_cap));
+            return Err(AdapterError::GasCapExceeded { estimated: est.as_u64(), cap: self.gas_cap });
         }
         typed.set_gas(est);
         let _sim = self.provider.call(&typed, None).await?;
@@ -110,11 +113,14 @@ impl FoundryAdapter {
             return Ok(TxResult::new(String::new(), Some(est.as_u64()), None));
         }
         let key = normalize(req.from().as_str());
-        let wallet = self.known_wallets.get(&key).cloned().ok_or_else(|| anyhow!("no local key for from address {}", req.from().as_str()))?;
+        let wallet = self.known_wallets.get(&key).cloned().ok_or_else(|| AdapterError::MissingLocalKey(req.from().as_str().to_string()))?;
         let chain_id = self.provider.get_chainid().await?.as_u64();
         let wallet = wallet.with_chain_id(chain_id);
         let client = SignerMiddleware::new(self.provider.clone(), wallet);
-        let pending = client.send_transaction(typed, None).await?;
+        let pending = client
+            .send_transaction(typed, None)
+            .await
+            .map_err(|e| AdapterError::Other(e.into()))?;
         let tx_hash = *pending;
         let receipt = pending.await?;
         if let Some(rcpt) = receipt {

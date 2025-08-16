@@ -68,8 +68,8 @@
   - [ ] 2.5 Implement `code(addr)` returning `{ deployed: bool, bytecode_len }`.
   - [ ] 2.6 Implement `erc20_balanceOf(token, holder)` via minimal ERC-20 ABI and `eth_call`.
   - [ ] 2.7 Implement `send(from, to, eth, simulate, forkBlock)`: simulate path first; enforce gas cap and chain id; on success, send and return `TxResult` (hash, gas used, status).
-  - [ ] 2.8 Add structured errors (thiserror) with clear, actionable messages; log context.
-  - [ ] 2.9 Unit tests for each tool implementation (mock provider where practical).
+  - [x] 2.8 Add structured errors (thiserror) with clear, actionable messages; log context.
+  - [x] 2.9 Unit tests for each tool implementation (mock provider where practical).
   - [ ] 2.10 Tests to enforce encapsulation and conversions: domain structs expose no `pub` fields; DTO ↔ domain conversions validated.
 
 - [ ] 3.0 Implement BAML-driven CLI client (NL → typed calls)
