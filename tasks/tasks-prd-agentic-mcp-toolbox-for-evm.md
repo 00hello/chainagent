@@ -58,12 +58,12 @@
 
 - [ ] 2.0 Implement MCP server toolbox (typed APIs, simulation-first)
   - [ ] 2.1 In `domain`, define `Toolbox` trait and request/response structs for: `balance`, `code`, `send`, `erc20_balanceOf`; include `simulate: bool`, `forkBlock: Option<u64>` on state-changing calls.
-  - [ ] 2.1a Ensure all domain structs keep fields private; expose getters/setters and constructors/builders (no `pub` fields).
+  - [x] 2.1a Ensure all domain structs keep fields private; expose getters/setters and constructors/builders (no `pub` fields).
   - [ ] 2.1b Add builders or smart constructors where multi-field invariants apply.
   - [ ] 2.2 Implement `foundry_adapter`: provider factory (RPC URL), ENS resolution helper, checksum validator, chain-id check, gas cap enforcement, retry-once policy for transient RPC.
   - [ ] 2.3 Build MCP server: register tools per MCP 2025-06-18; map JSON-schema to domain structs.
-  - [ ] 2.3a Introduce DTOs in `mcp_server::dto` for all tool inputs/outputs; implement `From`/`TryFrom` conversions to/from domain types.
-  - [ ] 2.3b Add a `facade` module that coordinates adapter and domain layers, centralizing business logic and guardrails.
+  - [x] 2.3a Introduce DTOs in `mcp_server::dto` for all tool inputs/outputs; implement `From`/`TryFrom` conversions to/from domain types.
+  - [x] 2.3b Add a `facade` module that coordinates adapter and domain layers, centralizing business logic and guardrails.
   - [ ] 2.4 Implement `balance(who)` using address/ENS resolution; return wei as string/u256.
   - [ ] 2.5 Implement `code(addr)` returning `{ deployed: bool, bytecode_len }`.
   - [ ] 2.6 Implement `erc20_balanceOf(token, holder)` via minimal ERC-20 ABI and `eth_call`.
