@@ -18,5 +18,11 @@ cargo run -p mcp_server
 cargo run -p baml_client
 ```
 
+Environment variables (create `.env`):
+```
+RPC_URL=http://127.0.0.1:8545
+ANTHROPIC_API_KEY=sk-ant-...
+```
+
 See `tasks/tasks-prd-agentic-mcp-toolbox-for-evm.md` for implementation plan.
 

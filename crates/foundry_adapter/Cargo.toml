@@ -11,4 +11,9 @@ serde_json.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
 tracing.workspace = true
+ethers-contract.workspace = true
+ethers-providers.workspace = true
+ethers-signers.workspace = true
+ethers-core.workspace = true
+ethers-middleware.workspace = true
 

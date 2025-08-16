@@ -51,9 +51,9 @@
 - [ ] 1.0 Scaffold workspace and environment
   - [x] 1.1 Initialize Cargo workspace (Rust 2024) with crates: `domain`, `foundry_adapter`, `mcp_server`, `baml_client`.
   - [x] 1.2 Add `rust-toolchain.toml` (pin >= 1.86.0) and baseline CI (fmt + clippy) config.
-  - [ ] 1.3 Add dependencies: MCP Rust SDK, Ethereum JSON-RPC client (e.g., ethers/alloy), serde, anyhow, thiserror, clap, tokio.
+  - [x] 1.3 Add dependencies: MCP Rust SDK, Ethereum JSON-RPC client (e.g., ethers/alloy), serde, anyhow, thiserror, clap, tokio.
   - [x] 1.4 Create `baml/agent.baml` and `baml/tools.baml` placeholders; wire BAML validation workflow into repo (docs in README).
-  - [ ] 1.5 Create `.env.example` with `ANTHROPIC_API_KEY` and `RPC_URL`; add `.env` to `.gitignore`.
+  - [x] 1.5 Create `.env.example` with `ANTHROPIC_API_KEY` and `RPC_URL`; add `.env` to `.gitignore`.
   - [x] 1.6 Draft `README.md` skeleton: architecture, quickstart, anvil fork command, golden tasks.
 
 - [ ] 2.0 Implement MCP server toolbox (typed APIs, simulation-first)

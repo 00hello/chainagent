@@ -21,3 +21,8 @@ tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 clap = { version = "4", features = ["derive"] }
+ethers-contract = "2"
+ethers-providers = "2"
+ethers-signers = "2"
+ethers-core = "2"
+ethers-middleware = "2"
