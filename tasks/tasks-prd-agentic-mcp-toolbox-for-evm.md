@@ -85,8 +85,8 @@
   - [x] 4.3 Implement ENS resolution in adapter; fallback/error strategy defined and tested.
   - [x] 4.4 Implement EIP-55 checksum enforcement; normalize inputs; reject invalid addresses with clear guidance.
   - [x] 4.5 Implement chain id check tied to fork; add configurable gas caps; document defaults.
-  - [ ] 4.6 Add LRU cache placeholders for ABIs/verified contracts; stub Etherscan read-only fallback; keep interface to add L2Beat-style discovery later.
-  - [ ] 4.7 Integration tests: `code` returns deployed=true for Router02 on fork; `erc20_balanceOf` returns numeric value for Alice/USDC.
+  - [x] 4.6 Add LRU cache placeholders for ABIs/verified contracts; stub Etherscan read-only fallback; keep interface to add L2Beat-style discovery later.
+  - [x] 4.7 Integration tests: `code` returns deployed=true for Router02 on fork; `erc20_balanceOf` returns numeric value for Alice/USDC.
 
 - [ ] 5.0 Validation & delivery: tests, README, demo script and acceptance checks
   - [ ] 5.1 E2E test: start MCP server, run CLI, execute “send 1 ETH from Alice to Bob”; assert Bob’s balance increases and receipt status is success.

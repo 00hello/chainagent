@@ -16,4 +16,5 @@ ethers-providers.workspace = true
 ethers-signers.workspace = true
 ethers-core.workspace = true
 ethers-middleware.workspace = true
+reqwest = { workspace = true, features = ["json"] }
 

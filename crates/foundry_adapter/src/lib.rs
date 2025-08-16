@@ -1,6 +1,7 @@
 mod error;
 mod constants;
 mod validation;
+mod cache;
 use anyhow::anyhow;
 use error::AdapterError;
 use constants::*;
