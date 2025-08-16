@@ -88,12 +88,12 @@
   - [x] 4.6 Add LRU cache placeholders for ABIs/verified contracts; stub Etherscan read-only fallback; keep interface to add L2Beat-style discovery later.
   - [x] 4.7 Integration tests: `code` returns deployed=true for Router02 on fork; `erc20_balanceOf` returns numeric value for Alice/USDC.
 
-- [ ] 5.0 Validation & delivery: tests, README, demo script and acceptance checks
-  - [ ] 5.1 E2E test: start MCP server, run CLI, execute “send 1 ETH from Alice to Bob”; assert Bob’s balance increases and receipt status is success.
-  - [ ] 5.2 Tests: `balance`, `erc20_balanceOf`, `code` happy paths + invalid-input cases.
-  - [ ] 5.3 Finalize README: architecture diagram bullets, exact commands, tool guardrails, acceptance criteria.
-  - [ ] 5.4 Provide demo script transcript: three golden tasks and one bonus (if implemented).
-  - [ ] 5.5 Tag open questions and known trade-offs; create follow-up issues for bonus scope (swap tool, external API).
+- [x] 5.0 Validation & delivery: tests, README, demo script and acceptance checks
+  - [x] 5.1 E2E test: start MCP server, run CLI, execute "send 1 ETH from Alice to Bob"; assert Bob's balance increases and receipt status is success.
+  - [x] 5.2 Tests: `balance`, `erc20_balanceOf`, `code` happy paths + invalid-input cases.
+  - [x] 5.3 Finalize README: architecture diagram bullets, exact commands, tool guardrails, acceptance criteria.
+  - [x] 5.4 Provide demo script transcript: three golden tasks and one bonus (if implemented).
+  - [x] 5.5 Tag open questions and known trade-offs; create follow-up issues for bonus scope (swap tool, external API).
 
 - [ ] 6.0 Optional bonus block (feature-flagged)
   - [ ] 6.1 Uniswap V2 swap tool (`uniswap_v2_swap_exact_eth_for_tokens`)

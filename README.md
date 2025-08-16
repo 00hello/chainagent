@@ -1,4 +1,4 @@
-## Foameo Labs Assessment Workspace
+## Chain Agent
 
 ### Architecture
 
@@ -66,7 +66,18 @@ ANTHROPIC_API_KEY=sk-ant-...
 - [x] BAML-driven CLI with natural language parsing
 - [x] Deterministic simulation for all state changes
 - [x] ENS resolution and address validation
-- [x] Comprehensive test coverage
+- [x] Comprehensive test coverage including E2E tests
+- [x] Error handling with clear, actionable messages
+- [x] Documentation with architecture and usage examples
 
-See `tasks/tasks-prd-agentic-mcp-toolbox-for-evm.md` for detailed implementation plan.
+### Demo
+
+Run the demo script to see the toolbox in action:
+```bash
+# Follow the demo script in demo.md
+cargo run -p baml_client -- -q "What's vitalik.eth's balance?"
+cargo run -p baml_client -- -q "Send 0.1 ETH from Alice to Bob"
+```
+
+See `demo.md` for comprehensive demo script and `tasks/tasks-prd-agentic-mcp-toolbox-for-evm.md` for detailed implementation plan.
 
