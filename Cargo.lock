@@ -615,6 +615,7 @@ name = "domain"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "serde",
  "serde_json",
  "thiserror 1.0.69",
@@ -1634,6 +1635,7 @@ name = "mcp_server"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "clap",
  "domain",
  "foundry_adapter",
