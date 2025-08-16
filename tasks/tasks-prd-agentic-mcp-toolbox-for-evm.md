@@ -73,11 +73,11 @@
   - [ ] 2.10 Tests to enforce encapsulation and conversions: domain structs expose no `pub` fields; DTO ↔ domain conversions validated.
 
 - [ ] 3.0 Implement BAML-driven CLI client (NL → typed calls)
-  - [ ] 3.1 Define BAML functions in `baml/tools.baml`: `SendEth`, `GetErc20Balance`, `IsDeployed`, mapping 1:1 to MCP tools.
-  - [ ] 3.2 Define selection logic in `baml/agent.baml` for routing NL prompts to the above functions with strict typing.
+  - [x] 3.1 Define BAML functions in `baml/tools.baml`: `SendEth`, `GetErc20Balance`, `IsDeployed`, mapping 1:1 to MCP tools.
+  - [x] 3.2 Define selection logic in `baml/agent.baml` for routing NL prompts to the above functions with strict typing.
   - [x] 3.3 Implement CLI (`crates/baml_client`): read NL input, call Anthropic (pluggable) to choose BAML function + args; validate via BAML; invoke MCP; echo typed call and pretty-print JSON.
-  - [ ] 3.4 Implement provider abstraction: `ChatProvider` trait so Claude/OpenAI/local can be swapped without changing call flow.
-  - [ ] 3.5 Snapshot tests for NL → function mapping on the three golden prompts (allow deterministic fixtures).
+  - [x] 3.4 Implement provider abstraction: `ChatProvider` trait so Claude/OpenAI/local can be swapped without changing call flow.
+  - [x] 3.5 Snapshot tests for NL → function mapping on the three golden prompts (allow deterministic fixtures).
 
 - [ ] 4.0 Chain integration: Anvil fork, ENS resolution, guardrails & seeds
   - [ ] 4.1 Document starting Anvil fork in README and set default RPC `http://127.0.0.1:8545`.

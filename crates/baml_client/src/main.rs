@@ -4,10 +4,12 @@ use tracing::info;
 mod baml;
 mod mcp;
 mod parser;
+mod provider;
 
 use baml::BamlFunction;
 use mcp::McpClient;
 use parser::NlParser;
+use provider::{MockProvider, AnthropicProvider};
 
 #[derive(Parser)]
 #[command(name = "baml-client")]
@@ -24,6 +26,10 @@ struct Cli {
     /// Enable debug logging
     #[arg(short, long)]
     debug: bool,
+
+    /// Use mock provider instead of real LLM
+    #[arg(short, long)]
+    mock: bool,
 }
 
 #[tokio::main]
@@ -41,8 +47,17 @@ async fn main() -> anyhow::Result<()> {
     info!("MCP server: {}", cli.server);
 
     // 3.1 Parse NL input and choose BAML function
-    let parser = NlParser::new();
-    let function = parser.parse_query(&cli.query)?;
+    let function = if cli.mock {
+        let provider = MockProvider::new();
+        let parser = NlParser::new(provider);
+        parser.parse_query(&cli.query).await?
+    } else {
+        let api_key = std::env::var("ANTHROPIC_API_KEY")
+            .expect("ANTHROPIC_API_KEY environment variable required");
+        let provider = AnthropicProvider::new(api_key);
+        let parser = NlParser::new(provider);
+        parser.parse_query(&cli.query).await?
+    };
     info!("Selected function: {}", function.name());
 
     // 3.2 Validate via BAML schema (implicit in our type system)
