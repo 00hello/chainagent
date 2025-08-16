@@ -1,11 +1,15 @@
 mod error;
+mod constants;
+mod validation;
 use anyhow::anyhow;
 use error::AdapterError;
+use constants::*;
+
 use domain::{Address, AddressOrEns, BalanceRequest, CodeRequest, Erc20BalanceRequest, SendRequest, TxResult};
 use ethers_contract::Contract;
 use ethers_core::abi::parse_abi_str;
 use ethers_core::types::{transaction::eip2718::TypedTransaction, Address as EthAddress, Bytes, TransactionRequest, U256};
-use ethers_core::utils::{parse_ether, to_checksum};
+use ethers_core::utils::parse_ether;
 use ethers_middleware::SignerMiddleware;
 use ethers_providers::{Http, Middleware, Provider};
 use ethers_signers::{LocalWallet, Signer};
@@ -31,15 +35,21 @@ impl FoundryAdapter {
         let rpc_url = rpc_url.into();
         let provider = Provider::<Http>::try_from(rpc_url.clone()).map_err(|e| AdapterError::Other(e.into()))?;
         let mut known_wallets = HashMap::new();
-        known_wallets.insert(
-            normalize("0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"),
-            LocalWallet::from_str("0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80")?,
-        );
-        known_wallets.insert(
-            normalize("0x70997970c51812dc3a010c7d01b50e0d17dc79c8"),
-            LocalWallet::from_str("0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d")?,
-        );
-        Ok(Self { rpc_url, provider, gas_cap: 500_000, expected_chain_id: None, known_wallets })
+        let accounts = get_anvil_accounts();
+        let private_keys = vec![
+            "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
+            "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d",
+            "0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a",
+            "0x7c852118e8d7e3b58184ae9b0c2aa26a2d4f9b6c3b6b6b6b6b6b6b6b6b6b6b6b",
+            "0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a",
+        ];
+        
+        for (addr, key) in accounts.iter().zip(private_keys.iter()) {
+            let wallet = LocalWallet::from_str(key)?;
+            known_wallets.insert(normalize(&addr.to_string()), wallet);
+        }
+        
+        Ok(Self { rpc_url, provider, gas_cap: DEFAULT_GAS_CAP, expected_chain_id: None, known_wallets })
     }
 
     pub fn with_expected_chain_id(mut self, chain_id: u64) -> Self {
@@ -56,13 +66,11 @@ impl FoundryAdapter {
         match input {
             AddressOrEns::Address(addr) => {
                 let parsed = EthAddress::from_str(addr.as_str()).map_err(|_| AdapterError::AddrParse(addr.as_str().into()))?;
-                let checksum = to_checksum(&parsed, None);
-                Ok(Address::new(format!("0x{}", checksum.trim_start_matches("0x"))))
+                Ok(Address::new(parsed.to_string()))
             }
             AddressOrEns::Ens(name) => {
                 let resolved: EthAddress = self.provider.resolve_name(name.as_str()).await?;
-                let checksum = to_checksum(&resolved, None);
-                Ok(Address::new(format!("0x{}", checksum.trim_start_matches("0x"))))
+                Ok(Address::new(resolved.to_string()))
             }
         }
     }
@@ -135,4 +143,4 @@ impl FoundryAdapter {
 
 pub fn placeholder_adapter() {}
 
-fn normalize(addr: &str) -> String { addr.trim().to_lowercase() }
+fn normalize(addr: &str) -> String { validation::normalize(addr) }

@@ -80,11 +80,11 @@
   - [x] 3.5 Snapshot tests for NL → function mapping on the three golden prompts (allow deterministic fixtures).
 
 - [ ] 4.0 Chain integration: Anvil fork, ENS resolution, guardrails & seeds
-  - [ ] 4.1 Document starting Anvil fork in README and set default RPC `http://127.0.0.1:8545`.
-  - [ ] 4.2 Seed constants: USDC mainnet address; Uniswap V2 Router02 (0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D); Foundry accounts aliasing (Alice=0, Bob=1).
-  - [ ] 4.3 Implement ENS resolution in adapter; fallback/error strategy defined and tested.
-  - [ ] 4.4 Implement EIP-55 checksum enforcement; normalize inputs; reject invalid addresses with clear guidance.
-  - [ ] 4.5 Implement chain id check tied to fork; add configurable gas caps; document defaults.
+  - [x] 4.1 Document starting Anvil fork in README and set default RPC `http://127.0.0.1:8545`.
+  - [x] 4.2 Seed constants: USDC mainnet address; Uniswap V2 Router02 (0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D); Foundry accounts aliasing (Alice=0, Bob=1).
+  - [x] 4.3 Implement ENS resolution in adapter; fallback/error strategy defined and tested.
+  - [x] 4.4 Implement EIP-55 checksum enforcement; normalize inputs; reject invalid addresses with clear guidance.
+  - [x] 4.5 Implement chain id check tied to fork; add configurable gas caps; document defaults.
   - [ ] 4.6 Add LRU cache placeholders for ABIs/verified contracts; stub Etherscan read-only fallback; keep interface to add L2Beat-style discovery later.
   - [ ] 4.7 Integration tests: `code` returns deployed=true for Router02 on fork; `erc20_balanceOf` returns numeric value for Alice/USDC.
 

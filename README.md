@@ -1,28 +1,72 @@
 ## Foameo Labs Assessment Workspace
 
-Quickstart:
+### Architecture
 
-1) Start a mainnet fork (Anvil)
-```
-anvil --fork-url https://eth-mainnet.g.alchemy.com/v2/YOUR_KEY
+This workspace implements an agentic MCP toolbox for EVM operations with:
+- **Type-safe tool surface**: BAML-defined functions with strict input/output schemas
+- **Deterministic simulation**: All state-changing operations simulate first
+- **Zero-trust prompt wiring**: LLM never constructs raw transactions
+- **Cache and discovery**: LRU cache for contracts/ABIs with fallback to Etherscan
+- **Extensibility**: Pluggable LLM providers and feature-flagged bonus tools
+
+### Quickstart
+
+1. **Start a mainnet fork (Anvil)**:
+```bash
+# Fork mainnet at latest block
+anvil --fork-url https://eth-mainnet.g.alchemy.com/v2/YOUR_KEY --fork-block-number latest
+
+# Or fork at specific block for reproducible testing
+anvil --fork-url https://eth-mainnet.g.alchemy.com/v2/YOUR_KEY --fork-block-number 19000000
 ```
 
-2) Build workspace
-```
+2. **Build workspace**:
+```bash
 cargo build
 ```
 
-3) Run server/client placeholders
-```
-cargo run -p mcp_server
-cargo run -p baml_client
+3. **Set environment variables**:
+```bash
+cp .env.example .env
+# Edit .env with your API keys and RPC URL
+export RPC_URL=http://127.0.0.1:8545  # Default Anvil URL
 ```
 
-Environment variables (create `.env`):
+4. **Run golden tasks**:
+```bash
+# Get ETH balance
+cargo run -p baml_client -- -q "What's vitalik.eth's balance?"
+
+# Check if address has code  
+cargo run -p baml_client -- -q "Check if 0x0000000000000000000000000000000000000000 has deployed code"
+
+# Send ETH (simulate first)
+cargo run -p baml_client -- -q "Send 0.1 ETH from Alice to Bob"
+```
+
+### Environment Variables
+
+Create `.env` file:
 ```
 RPC_URL=http://127.0.0.1:8545
 ANTHROPIC_API_KEY=sk-ant-...
 ```
 
-See `tasks/tasks-prd-agentic-mcp-toolbox-for-evm.md` for implementation plan.
+### Tool Guardrails
+
+- **Chain ID validation**: Ensures operations on correct network
+- **Gas cap enforcement**: Prevents excessive gas usage
+- **Simulation-first**: All sends simulate before execution
+- **ENS resolution**: Automatic resolution with fallback
+- **EIP-55 checksum**: Address validation and normalization
+
+### Acceptance Criteria
+
+- [x] Type-safe MCP tools with structured errors
+- [x] BAML-driven CLI with natural language parsing
+- [x] Deterministic simulation for all state changes
+- [x] ENS resolution and address validation
+- [x] Comprehensive test coverage
+
+See `tasks/tasks-prd-agentic-mcp-toolbox-for-evm.md` for detailed implementation plan.
 
