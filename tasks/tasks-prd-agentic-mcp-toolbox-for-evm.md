@@ -6,6 +6,8 @@
 - `crates/foundry_adapter/src/lib.rs` - JSON-RPC helpers, ENS resolution, gas/chain checks, simulation utilities.
 - `crates/mcp_server/src/main.rs` - MCP server entry; tool registration and provider wiring.
 - `crates/mcp_server/src/toolbox.rs` - Tool implementations (`balance`, `code`, `send`, `erc20_balanceOf`).
+- `crates/mcp_server/src/dto.rs` - DTOs for MCP request/response payloads; explicit conversions to/from domain.
+- `crates/mcp_server/src/facade.rs` - Facade layer orchestrating adapter/domain; centralizes business logic.
 - `crates/mcp_server/src/uniswap_v2.rs` - Optional: Uniswap V2 `swapExactETHForTokens` tool implementation (behind feature flag).
 - `crates/mcp_server/src/external_api.rs` - Optional: external API clients (DefiLlama/0x/Brave) for token address discovery.
 - `crates/baml_client/src/main.rs` - CLI REPL; NL → BAML function mapping → MCP calls; pretty printing.
@@ -27,6 +29,23 @@
 - Use `cargo test` to run all tests. To run a specific test, you can use `cargo test <test_name>`.
 - **Always include documentation updates** - Any task that adds or changes user-facing functionality (CLI commands, APIs, interfaces) must include a sub-task to update relevant documentation (README.md, help text, etc.).
 
+#### Design conventions (encapsulation, DTOs, facades)
+
+- All domain types must keep fields private; expose behavior via getters/setters and constructors/builders. Consumers never access fields directly.
+- Use DTOs at boundaries (MCP I/O, serialization). Convert DTOs ↔ domain models explicitly.
+- Apply a facade/helper module to host business logic instead of scattering it across types.
+- If a field is widely used, replace direct access with accessor/utility functions.
+- If a field may be removed/renamed, depend on trait/interface abstractions, not concrete fields.
+- If a field will evolve, never make it `pub`; add getters now to preserve stability later.
+
+| Problem | Strategy |
+| --- | --- |
+| Field is used everywhere | Replace with accessor or utility function |
+| Want to remove or rename field | Use trait/interface abstraction |
+| Field is serialized/deserialized | Introduce a DTO and conversion logic |
+| Business logic is tied to field | Move logic into a facade/helper module |
+| Field will likely evolve | Never make it `pub`, always use getters |
+
 ## Tasks
 
 - [ ] 1.0 Scaffold workspace and environment
@@ -39,14 +58,19 @@
 
 - [ ] 2.0 Implement MCP server toolbox (typed APIs, simulation-first)
   - [ ] 2.1 In `domain`, define `Toolbox` trait and request/response structs for: `balance`, `code`, `send`, `erc20_balanceOf`; include `simulate: bool`, `forkBlock: Option<u64>` on state-changing calls.
+  - [ ] 2.1a Ensure all domain structs keep fields private; expose getters/setters and constructors/builders (no `pub` fields).
+  - [ ] 2.1b Add builders or smart constructors where multi-field invariants apply.
   - [ ] 2.2 Implement `foundry_adapter`: provider factory (RPC URL), ENS resolution helper, checksum validator, chain-id check, gas cap enforcement, retry-once policy for transient RPC.
   - [ ] 2.3 Build MCP server: register tools per MCP 2025-06-18; map JSON-schema to domain structs.
+  - [ ] 2.3a Introduce DTOs in `mcp_server::dto` for all tool inputs/outputs; implement `From`/`TryFrom` conversions to/from domain types.
+  - [ ] 2.3b Add a `facade` module that coordinates adapter and domain layers, centralizing business logic and guardrails.
   - [ ] 2.4 Implement `balance(who)` using address/ENS resolution; return wei as string/u256.
   - [ ] 2.5 Implement `code(addr)` returning `{ deployed: bool, bytecode_len }`.
   - [ ] 2.6 Implement `erc20_balanceOf(token, holder)` via minimal ERC-20 ABI and `eth_call`.
   - [ ] 2.7 Implement `send(from, to, eth, simulate, forkBlock)`: simulate path first; enforce gas cap and chain id; on success, send and return `TxResult` (hash, gas used, status).
   - [ ] 2.8 Add structured errors (thiserror) with clear, actionable messages; log context.
   - [ ] 2.9 Unit tests for each tool implementation (mock provider where practical).
+  - [ ] 2.10 Tests to enforce encapsulation and conversions: domain structs expose no `pub` fields; DTO ↔ domain conversions validated.
 
 - [ ] 3.0 Implement BAML-driven CLI client (NL → typed calls)
   - [ ] 3.1 Define BAML functions in `baml/tools.baml`: `SendEth`, `GetErc20Balance`, `IsDeployed`, mapping 1:1 to MCP tools.
