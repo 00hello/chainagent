@@ -3,6 +3,7 @@ use ethers_core::types::Address;
 // Mainnet contract addresses
 pub const USDC_MAINNET: &str = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
 pub const UNISWAP_V2_ROUTER: &str = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
+pub const WETH_MAINNET: &str = "0xC02aaA39b223FE8D0A0E5C4F27eAD9083C756Cc2";
 
 // Anvil default accounts (seeded with 10000 ETH each)
 pub const ANVIL_ACCOUNT_0: &str = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"; // Alice

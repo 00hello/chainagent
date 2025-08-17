@@ -174,6 +174,70 @@ impl TxResult {
     pub fn status(&self) -> Option<bool> { self.status }
 }
 
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct UniswapV2SwapRequest {
+    amount_eth: String,
+    token_out: Address,
+    min_out_bps: u32,
+    deadline_s: u64,
+    simulate: bool,
+}
+
+impl UniswapV2SwapRequest {
+    pub fn builder() -> UniswapV2SwapRequestBuilder { UniswapV2SwapRequestBuilder::default() }
+    pub fn amount_eth(&self) -> &str { &self.amount_eth }
+    pub fn token_out(&self) -> &Address { &self.token_out }
+    pub fn min_out_bps(&self) -> u32 { self.min_out_bps }
+    pub fn deadline_s(&self) -> u64 { self.deadline_s }
+    pub fn simulate(&self) -> bool { self.simulate }
+}
+
+#[derive(Default)]
+pub struct UniswapV2SwapRequestBuilder {
+    amount_eth: Option<String>,
+    token_out: Option<Address>,
+    min_out_bps: Option<u32>,
+    deadline_s: Option<u64>,
+    simulate: Option<bool>,
+}
+
+impl UniswapV2SwapRequestBuilder {
+    pub fn amount_eth(mut self, amount_eth: impl Into<String>) -> Self { self.amount_eth = Some(amount_eth.into()); self }
+    pub fn token_out(mut self, token_out: Address) -> Self { self.token_out = Some(token_out); self }
+    pub fn min_out_bps(mut self, min_out_bps: u32) -> Self { self.min_out_bps = Some(min_out_bps); self }
+    pub fn deadline_s(mut self, deadline_s: u64) -> Self { self.deadline_s = Some(deadline_s); self }
+    pub fn simulate(mut self, simulate: bool) -> Self { self.simulate = Some(simulate); self }
+    pub fn build(self) -> Result<UniswapV2SwapRequest, &'static str> {
+        Ok(UniswapV2SwapRequest {
+            amount_eth: self.amount_eth.ok_or("amount_eth required")?,
+            token_out: self.token_out.ok_or("token_out required")?,
+            min_out_bps: self.min_out_bps.unwrap_or(0),
+            deadline_s: self.deadline_s.ok_or("deadline_s required")?,
+            simulate: self.simulate.unwrap_or(true),
+        })
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct UniswapV2SwapResponse {
+    tx_hash: String,
+    amount_out: Option<String>,
+    path: Vec<Address>,
+    gas_used: Option<u64>,
+    status: Option<bool>,
+}
+
+impl UniswapV2SwapResponse {
+    pub fn new(tx_hash: String, amount_out: Option<String>, path: Vec<Address>, gas_used: Option<u64>, status: Option<bool>) -> Self {
+        Self { tx_hash, amount_out, path, gas_used, status }
+    }
+    pub fn tx_hash(&self) -> &str { &self.tx_hash }
+    pub fn amount_out(&self) -> Option<&str> { self.amount_out.as_deref() }
+    pub fn path(&self) -> &Vec<Address> { &self.path }
+    pub fn gas_used(&self) -> Option<u64> { self.gas_used }
+    pub fn status(&self) -> Option<bool> { self.status }
+}
+
 #[async_trait]
 pub trait Toolbox: Send + Sync {
     async fn balance(&self, req: BalanceRequest) -> anyhow::Result<BalanceResponse>;

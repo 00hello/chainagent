@@ -30,6 +30,10 @@ struct Cli {
     /// Use mock provider instead of real LLM
     #[arg(short, long)]
     mock: bool,
+
+    /// Simulate-only; do not broadcast state-changing transactions
+    #[arg(long, default_value_t = false)]
+    dry_run: bool,
 }
 
 #[tokio::main]
@@ -82,7 +86,16 @@ async fn main() -> anyhow::Result<()> {
             serde_json::json!({ "amount": amount })
         }
         BamlFunction::Send(ref req) => {
-            let tx_result = client.send(req).await?;
+            // Honor --dry-run by forcing simulate=true
+            let mut req_overridden = domain::SendRequest::builder()
+                .from(req.from().clone())
+                .to(req.to().clone())
+                .amount_eth(req.amount_eth().to_string())
+                .simulate(cli.dry_run || req.simulate())
+                .fork_block(req.fork_block())
+                .build()
+                .map_err(|e| anyhow::anyhow!("{}", e))?;
+            let tx_result = client.send(&req_overridden).await?;
             serde_json::json!({
                 "tx_hash": tx_result.tx_hash(),
                 "success": tx_result.status().unwrap_or(false)
