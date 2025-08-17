@@ -85,11 +85,20 @@ Bonus: A token address lookup tool and a tiny RAG sidecar are available for inte
 
 Enable bonus features at runtime:
 ```bash
-# either via CLI flag
+# either via CLI flag (client)
 cargo run -p baml_client -- --enable-bonus -q "..."
 
-# or via environment variable
+# or via environment variable (client/server)
 BONUS=1 cargo run -p baml_client -- -q "..."
+```
+
+Uniswap V2 swap scaffolding (feature-gated):
+```bash
+# Enable swap scaffolding on the server at compile-time
+cargo run -p mcp_server --features bonus_uniswap_v2
+
+# Run E2E swap test with the feature enabled
+cargo test --features bonus_uniswap_v2 -- tests/uniswap_swap_e2e.rs
 ```
 
 Included bonus tools:
