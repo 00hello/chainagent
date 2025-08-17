@@ -102,9 +102,9 @@
     - [x] 6.1.3 Enforce simulate-first; allow `--dry-run` in CLI; return structured result (tx hash, amounts, path, gas used).
     - [x] 6.1.4 E2E test in `tests/uniswap_swap_e2e.rs` using Anvil fork; verify nonzero output and tx success.
   - [ ] 6.2 External API lookup tool (token address discovery)
-    - [ ] 6.2.1 Implement client in `mcp_server/external_api.rs` for one provider (DefiLlama or 0x or Brave); schema: `{ symbol | name | chain } -> { address }`.
-    - [ ] 6.2.2 Add basic caching (in-memory LRU) and rate limit/backoff handling; clear errors on misses.
-    - [ ] 6.2.3 Integration tests in `crates/mcp_server/tests/external_api_lookup.rs` (mock HTTP where possible).
+    - [x] 6.2.1 Implement client in `mcp_server/external_api.rs` for one provider (DefiLlama or 0x or Brave); schema: `{ symbol | name | chain } -> { address }`.
+    - [x] 6.2.2 Add basic caching (in-memory LRU) and rate limit/backoff handling; clear errors on misses.
+    - [x] 6.2.3 Integration tests in `crates/mcp_server/tests/external_api_lookup.rs` (mock HTTP where possible).
     - [ ] 6.2.4 Expose as an MCP tool; optional use by swap/erc20 helpers.
   - [ ] 6.3 Tiny local RAG sidecar (Uniswap docs and Router interface)
     - [ ] 6.3.1 Create `crates/rag_client` with ingest pipeline (docs and ABI/interface text) and local embeddings.

@@ -3,6 +3,9 @@ name = "mcp_server"
 version = "0.1.0"
 edition = "2024"
 
+[features]
+bonus_uniswap_v2 = []
+
 [dependencies]
 domain = { path = "../domain" }
 foundry_adapter = { path = "../foundry_adapter" }
@@ -14,4 +17,8 @@ tokio.workspace = true
 tracing.workspace = true
 clap.workspace = true
 async-trait.workspace = true
+reqwest.workspace = true
+
+[dev-dependencies]
+httpmock = "0.7"
 
