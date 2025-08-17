@@ -79,7 +79,7 @@ cargo run -p baml_client -- -q "What's vitalik.eth's balance?"
 cargo run -p baml_client -- -q "Send 0.1 ETH from Alice to Bob"
 ```
 
-Bonus: A token address lookup tool (server-side external API) is available for integration and testing.
+Bonus: A token address lookup tool and a tiny RAG sidecar are available for integration and testing.
 
 See `demo.md` for comprehensive demo script and `tasks/tasks-prd-agentic-mcp-toolbox-for-evm.md` for detailed implementation plan.
 

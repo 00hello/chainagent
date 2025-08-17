@@ -101,15 +101,15 @@
     - [x] 6.1.2 In `mcp_server/uniswap_v2.rs`, build calldata for `swapExactETHForTokens(uint256,address[],address,uint256)`; route via WETH→token; seed Router02 address; honor deadline.
     - [x] 6.1.3 Enforce simulate-first; allow `--dry-run` in CLI; return structured result (tx hash, amounts, path, gas used).
     - [x] 6.1.4 E2E test in `tests/uniswap_swap_e2e.rs` using Anvil fork; verify nonzero output and tx success.
-  - [ ] 6.2 External API lookup tool (token address discovery)
+  - [x] 6.2 External API lookup tool (token address discovery)
     - [x] 6.2.1 Implement client in `mcp_server/external_api.rs` for one provider (DefiLlama or 0x or Brave); schema: `{ symbol | name | chain } -> { address }`.
     - [x] 6.2.2 Add basic caching (in-memory LRU) and rate limit/backoff handling; clear errors on misses.
     - [x] 6.2.3 Integration tests in `crates/mcp_server/tests/external_api_lookup.rs` (mock HTTP where possible).
     - [x] 6.2.4 Expose as an MCP tool; optional use by swap/erc20 helpers.
   - [ ] 6.3 Tiny local RAG sidecar (Uniswap docs and Router interface)
-    - [ ] 6.3.1 Create `crates/rag_client` with ingest pipeline (docs and ABI/interface text) and local embeddings.
-    - [ ] 6.3.2 Provide a simple `query` command returning top-k snippets; optional: surface snippets to the client before answering.
-    - [ ] 6.3.3 Add README section describing how to run RAG build/query; keep it off the main path unless `--enable-rag` is set.
+    - [x] 6.3.1 Create `crates/rag_client` with ingest pipeline (docs and ABI/interface text) and local embeddings.
+    - [x] 6.3.2 Provide a simple `query` command returning top-k snippets; optional: surface snippets to the client before answering.
+    - [x] 6.3.3 Add README section describing how to run RAG build/query; keep it off the main path unless `--enable-rag` is set.
   - [ ] 6.4 Feature flagging and docs
     - [ ] 6.4.1 Add env/CLI flag `--enable-bonus` (or `BONUS=1`) to enable swap, API lookup, and RAG tools at runtime.
     - [ ] 6.4.2 Document flags in README and demo script; keep default build/runtime without bonus features.
