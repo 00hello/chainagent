@@ -106,12 +106,12 @@
     - [x] 6.2.2 Add basic caching (in-memory LRU) and rate limit/backoff handling; clear errors on misses.
     - [x] 6.2.3 Integration tests in `crates/mcp_server/tests/external_api_lookup.rs` (mock HTTP where possible).
     - [x] 6.2.4 Expose as an MCP tool; optional use by swap/erc20 helpers.
-  - [ ] 6.3 Tiny local RAG sidecar (Uniswap docs and Router interface)
+  - [x] 6.3 Tiny local RAG sidecar (Uniswap docs and Router interface)
     - [x] 6.3.1 Create `crates/rag_client` with ingest pipeline (docs and ABI/interface text) and local embeddings.
     - [x] 6.3.2 Provide a simple `query` command returning top-k snippets; optional: surface snippets to the client before answering.
     - [x] 6.3.3 Add README section describing how to run RAG build/query; keep it off the main path unless `--enable-rag` is set.
-  - [ ] 6.4 Feature flagging and docs
-    - [ ] 6.4.1 Add env/CLI flag `--enable-bonus` (or `BONUS=1`) to enable swap, API lookup, and RAG tools at runtime.
-    - [ ] 6.4.2 Document flags in README and demo script; keep default build/runtime without bonus features.
+  - [x] 6.4 Feature flagging and docs
+    - [x] 6.4.1 Add env/CLI flag `--enable-bonus` (or `BONUS=1`) to enable swap, API lookup, and RAG tools at runtime.
+    - [x] 6.4.2 Document flags in README and demo script; keep default build/runtime without bonus features.
 
 

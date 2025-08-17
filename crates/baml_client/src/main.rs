@@ -34,6 +34,10 @@ struct Cli {
     /// Simulate-only; do not broadcast state-changing transactions
     #[arg(long, default_value_t = false)]
     dry_run: bool,
+
+    /// Enable bonus tools (swap, token lookup, RAG); can also set BONUS=1
+    #[arg(long, default_value_t = false)]
+    enable_bonus: bool,
 }
 
 #[tokio::main]
@@ -41,10 +45,15 @@ async fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
     // Initialize logging
-    if cli.debug {
-        tracing_subscriber::fmt::init();
-    } else {
-        tracing_subscriber::fmt::init();
+    tracing_subscriber::fmt::init();
+
+    // Bonus flag/env
+    let bonus_env = std::env::var("BONUS").ok().map(|v| v == "1").unwrap_or(false);
+    let bonus_enabled = cli.enable_bonus || bonus_env;
+    if bonus_enabled {
+        // surface for child components if needed
+        std::env::set_var("BONUS", "1");
+        info!("Bonus features enabled");
     }
 
     info!("Processing query: {}", cli.query);
@@ -87,7 +96,7 @@ async fn main() -> anyhow::Result<()> {
         }
         BamlFunction::Send(ref req) => {
             // Honor --dry-run by forcing simulate=true
-            let mut req_overridden = domain::SendRequest::builder()
+            let req_overridden = domain::SendRequest::builder()
                 .from(req.from().clone())
                 .to(req.to().clone())
                 .amount_eth(req.amount_eth().to_string())

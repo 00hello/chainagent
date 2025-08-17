@@ -8,6 +8,8 @@ mod external_api;
 use dto::{TokenLookupIn, TokenLookupOut};
 
 fn main() {
+    let bonus_enabled = std::env::var("BONUS").ok().map(|v| v == "1").unwrap_or(false);
+    if bonus_enabled { println!("mcp_server: BONUS features enabled"); }
     println!("mcp_server starting (placeholder)");
 }
 
