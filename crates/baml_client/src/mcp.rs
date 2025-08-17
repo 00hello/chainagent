@@ -87,11 +87,27 @@ impl McpClient {
         let result: Value = response.json().await?;
         info!("Send response: {}", serde_json::to_string_pretty(&result)?);
         
-        // TODO: Parse into proper TxResult
         Ok(TxResult::new(
             result["tx_hash"].as_str().unwrap_or("").to_string(),
             None, // gas_used
             result["success"].as_bool(), // status
         ))
+    }
+
+    // Bonus: external API token lookup
+    pub async fn token_lookup_address(&self, symbol: &str, chain: &str) -> Result<Option<String>> {
+        let response = self
+            .http_client
+            .post(&format!("{}/token_lookup", self.server_url))
+            .json(&json!({
+                "symbol": symbol,
+                "chain": chain
+            }))
+            .send()
+            .await?;
+
+        let result: Value = response.json().await?;
+        info!("Token lookup response: {}", serde_json::to_string_pretty(&result)?);
+        Ok(result["address"].as_str().map(|s| s.to_string()))
     }
 }

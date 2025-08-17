@@ -105,7 +105,7 @@
     - [x] 6.2.1 Implement client in `mcp_server/external_api.rs` for one provider (DefiLlama or 0x or Brave); schema: `{ symbol | name | chain } -> { address }`.
     - [x] 6.2.2 Add basic caching (in-memory LRU) and rate limit/backoff handling; clear errors on misses.
     - [x] 6.2.3 Integration tests in `crates/mcp_server/tests/external_api_lookup.rs` (mock HTTP where possible).
-    - [ ] 6.2.4 Expose as an MCP tool; optional use by swap/erc20 helpers.
+    - [x] 6.2.4 Expose as an MCP tool; optional use by swap/erc20 helpers.
   - [ ] 6.3 Tiny local RAG sidecar (Uniswap docs and Router interface)
     - [ ] 6.3.1 Create `crates/rag_client` with ingest pipeline (docs and ABI/interface text) and local embeddings.
     - [ ] 6.3.2 Provide a simple `query` command returning top-k snippets; optional: surface snippets to the client before answering.

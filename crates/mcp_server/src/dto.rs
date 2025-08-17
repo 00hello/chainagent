@@ -61,6 +61,20 @@ impl TryFrom<SendIn> for SendRequest {
     }
 }
 
+// External API lookup DTOs
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct TokenLookupIn {
+    pub symbol: String,
+    pub chain: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+pub struct TokenLookupOut {
+    pub address: Option<String>,
+    pub symbol: String,
+    pub chain: String,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
