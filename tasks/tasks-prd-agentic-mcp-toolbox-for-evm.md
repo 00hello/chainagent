@@ -100,7 +100,7 @@
     - [x] 6.1.1 In `domain`, add request/response structs (amount_eth, token_out, min_out_bps, deadline_s; plus `simulate` default true).
     - [x] 6.1.2 In `mcp_server/uniswap_v2.rs`, build calldata for `swapExactETHForTokens(uint256,address[],address,uint256)`; route via WETH→token; seed Router02 address; honor deadline.
     - [x] 6.1.3 Enforce simulate-first; allow `--dry-run` in CLI; return structured result (tx hash, amounts, path, gas used).
-    - [ ] 6.1.4 E2E test in `tests/uniswap_swap_e2e.rs` using Anvil fork; verify nonzero output and tx success.
+    - [x] 6.1.4 E2E test in `tests/uniswap_swap_e2e.rs` using Anvil fork; verify nonzero output and tx success.
   - [ ] 6.2 External API lookup tool (token address discovery)
     - [ ] 6.2.1 Implement client in `mcp_server/external_api.rs` for one provider (DefiLlama or 0x or Brave); schema: `{ symbol | name | chain } -> { address }`.
     - [ ] 6.2.2 Add basic caching (in-memory LRU) and rate limit/backoff handling; clear errors on misses.
