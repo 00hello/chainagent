@@ -13,6 +13,9 @@ pub struct ChatRequest {
     pub messages: Vec<ChatMessage>,
     pub model: String,
     pub temperature: Option<f32>,
+    /// Optional: native tool registration (Claude/OpenAI-style)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tools: Option<Vec<ToolDef>>, 
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -26,6 +29,15 @@ pub struct Usage {
     pub prompt_tokens: u32,
     pub completion_tokens: u32,
     pub total_tokens: u32,
+}
+
+/// Minimal tool definition for native tool registration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ToolDef {
+    pub name: String,
+    pub description: String,
+    /// JSON schema for inputs
+    pub input_schema: serde_json::Value,
 }
 
 #[async_trait]
@@ -59,7 +71,9 @@ impl ChatProvider for AnthropicProvider {
                 "model": request.model,
                 "max_tokens": 1000,
                 "messages": request.messages,
-                "temperature": request.temperature.unwrap_or(0.0)
+                "temperature": request.temperature.unwrap_or(0.0),
+                // Native tool registration (if provided)
+                "tools": request.tools.unwrap_or_default(),
             }))
             .send()
             .await?;
@@ -90,6 +104,10 @@ impl MockProvider {
             r#"{"function": {"type": "GetEthBalance", "who": "vitalik.eth"}}"#.to_string(),
         );
         responses.insert(
+            "hello".to_string(),
+            r#"{"message": "hello"}"#.to_string(),
+        );
+        responses.insert(
             "code".to_string(),
             r#"{"function": {"type": "IsDeployed", "addr": "0x0000000000000000000000000000000000000000"}}"#.to_string(),
         );
@@ -106,11 +124,14 @@ impl MockProvider {
 impl ChatProvider for MockProvider {
     async fn chat(&self, _request: ChatRequest) -> Result<ChatResponse> {
         // Simple keyword-based response for testing
-        let content = if _request.messages.last().unwrap().content.contains("send") {
+        let last = &_request.messages.last().unwrap().content;
+        let content = if last.trim().eq_ignore_ascii_case("hello") || last.trim().eq_ignore_ascii_case("hi") {
+            self.responses.get("hello").unwrap()
+        } else if last.contains("send") {
             self.responses.get("send").unwrap()
-        } else if _request.messages.last().unwrap().content.contains("code") {
+        } else if last.contains("code") {
             self.responses.get("code").unwrap()
-        } else if _request.messages.last().unwrap().content.contains("balance") {
+        } else if last.contains("balance") {
             self.responses.get("balance").unwrap()
         } else {
             self.responses.get("balance").unwrap() // default

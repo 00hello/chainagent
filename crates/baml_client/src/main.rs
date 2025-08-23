@@ -51,8 +51,6 @@ async fn main() -> anyhow::Result<()> {
     let bonus_env = std::env::var("BONUS").ok().map(|v| v == "1").unwrap_or(false);
     let bonus_enabled = cli.enable_bonus || bonus_env;
     if bonus_enabled {
-        // surface for child components if needed
-        std::env::set_var("BONUS", "1");
         info!("Bonus features enabled");
     }
 

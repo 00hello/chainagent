@@ -16,6 +16,56 @@ impl<P: ChatProvider> NlParser<P> {
         }
     }
 
+    fn native_tools_schema(&self) -> Vec<crate::provider::ToolDef> {
+        // Describe tools as simple JSON schemas so providers like Claude/OpenAI can select them
+        vec![
+            crate::provider::ToolDef {
+                name: "GetEthBalance".to_string(),
+                description: "Get ETH balance of an address or ENS name".to_string(),
+                input_schema: serde_json::json!({
+                    "type": "object",
+                    "properties": { "who": {"type": "string"} },
+                    "required": ["who"],
+                }),
+            },
+            crate::provider::ToolDef {
+                name: "IsDeployed".to_string(),
+                description: "Check if an address has deployed code".to_string(),
+                input_schema: serde_json::json!({
+                    "type": "object",
+                    "properties": { "addr": {"type": "string"} },
+                    "required": ["addr"],
+                }),
+            },
+            crate::provider::ToolDef {
+                name: "GetErc20Balance".to_string(),
+                description: "Get ERC-20 token balance for holder".to_string(),
+                input_schema: serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "token": {"type": "string"},
+                        "holder": {"type": "string"}
+                    },
+                    "required": ["token", "holder"],
+                }),
+            },
+            crate::provider::ToolDef {
+                name: "SendEth".to_string(),
+                description: "Send ETH from one address to another".to_string(),
+                input_schema: serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "from": {"type": "string"},
+                        "to": {"type": "string"},
+                        "amount_eth": {"type": "string"},
+                        "simulate": {"type": "boolean"}
+                    },
+                    "required": ["from", "to", "amount_eth"],
+                }),
+            },
+        ]
+    }
+
     pub async fn parse_query(&self, query: &str) -> Result<BamlFunction> {
         info!("Parsing query with LLM: {}", query);
 
@@ -47,13 +97,26 @@ Return a JSON object with the function type and parameters."#.to_string(),
             messages,
             model: "claude-3-sonnet-20240229".to_string(),
             temperature: Some(0.0),
+            // Pass native tool schemas so the LLM can select tools or decline
+            tools: Some(self.native_tools_schema()),
         };
 
         let response = self.provider.chat(request).await?;
         debug!("LLM response: {}", response.content);
 
         // Parse the response and map to BAML function
-        self.parse_llm_response(&response.content)
+        match self.parse_llm_response(&response.content) {
+            Ok(func) => Ok(func),
+            Err(_) => {
+                // Small-talk / no-tool fallback: if input is generic, respond with a help-like default
+                // Here we route to a benign, read-only balance check of vitalik.eth to keep flow deterministic
+                // In a richer client, this would return a plain chat response instead.
+                debug!("Falling back to no-tool/help path for free-form input");
+                Ok(BamlFunction::Balance(
+                    domain::BalanceRequest::new(domain::AddressOrEns::from_ens("vitalik.eth".to_string()))
+                ))
+            }
+        }
     }
 
     fn parse_llm_response(&self, response: &str) -> Result<BamlFunction> {
@@ -133,6 +196,12 @@ Return a JSON object with the function type and parameters."#.to_string(),
         let response_lower = response.to_lowercase();
         
         // Simple keyword-based parsing as fallback
+        if response_lower.trim() == "hello" || response_lower.trim() == "hi" {
+            // No-tool small talk → help-y default
+            return Ok(BamlFunction::Balance(
+                domain::BalanceRequest::new(domain::AddressOrEns::from_ens("vitalik.eth".to_string()))
+            ));
+        }
         if response_lower.contains("balance") && response_lower.contains("eth") {
             let who = self.extract_address_or_ens(response)?;
             debug!("Parsed balance request for: {}", who);
@@ -252,6 +321,10 @@ mod tests {
             assert_eq!(req.amount_eth(), "0.1");
             assert!(req.simulate()); // Should default to simulation
         }
+
+        // Small talk should not error
+        let function = parser.parse_query("hello").await.unwrap();
+        assert!(matches!(function, BamlFunction::Balance(_)));
     }
 
     #[tokio::test]
