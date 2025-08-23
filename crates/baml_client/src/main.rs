@@ -77,6 +77,10 @@ async fn main() -> anyhow::Result<()> {
     // 3.3 Invoke MCP server
     let client = McpClient::new(cli.server);
     let result = match function {
+        BamlFunction::Chat(ref text) => {
+            println!("Chat: {}", text);
+            serde_json::json!({ "message": text })
+        }
         BamlFunction::Balance(ref req) => {
             let balance = client.balance(req).await?;
             serde_json::json!({ "balance": balance })

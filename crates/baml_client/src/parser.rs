@@ -104,18 +104,10 @@ Return a JSON object with the function type and parameters."#.to_string(),
         let response = self.provider.chat(request).await?;
         debug!("LLM response: {}", response.content);
 
-        // Parse the response and map to BAML function
+        // Parse the response. If it's not a tool call JSON, treat it as plain chat.
         match self.parse_llm_response(&response.content) {
             Ok(func) => Ok(func),
-            Err(_) => {
-                // Small-talk / no-tool fallback: if input is generic, respond with a help-like default
-                // Here we route to a benign, read-only balance check of vitalik.eth to keep flow deterministic
-                // In a richer client, this would return a plain chat response instead.
-                debug!("Falling back to no-tool/help path for free-form input");
-                Ok(BamlFunction::Balance(
-                    domain::BalanceRequest::new(domain::AddressOrEns::from_ens("vitalik.eth".to_string()))
-                ))
-            }
+            Err(_) => Ok(BamlFunction::Chat(response.content)),
         }
     }
 
@@ -196,12 +188,6 @@ Return a JSON object with the function type and parameters."#.to_string(),
         let response_lower = response.to_lowercase();
         
         // Simple keyword-based parsing as fallback
-        if response_lower.trim() == "hello" || response_lower.trim() == "hi" {
-            // No-tool small talk → help-y default
-            return Ok(BamlFunction::Balance(
-                domain::BalanceRequest::new(domain::AddressOrEns::from_ens("vitalik.eth".to_string()))
-            ));
-        }
         if response_lower.contains("balance") && response_lower.contains("eth") {
             let who = self.extract_address_or_ens(response)?;
             debug!("Parsed balance request for: {}", who);
@@ -322,9 +308,9 @@ mod tests {
             assert!(req.simulate()); // Should default to simulation
         }
 
-        // Small talk should not error
+        // Small talk should return Chat
         let function = parser.parse_query("hello").await.unwrap();
-        assert!(matches!(function, BamlFunction::Balance(_)));
+        assert!(matches!(function, BamlFunction::Chat(_)));
     }
 
     #[tokio::test]
