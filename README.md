@@ -60,6 +60,20 @@ ANTHROPIC_API_KEY=sk-ant-...
 - **ENS resolution**: Automatic resolution with fallback
 - **EIP-55 checksum**: Address validation and normalization
 
+### Tool registration and chat fallback
+
+- **Native tool registration**: The client registers available tools with the LLM using JSON schemas (name, description, input types). This lets the model choose a tool when appropriate, or abstain when the input is general conversation.
+- **No‑tool/small‑talk fallback**: If input doesn’t map to any tool (e.g., "hello"), the client responds without performing any state‑changing action. In mock mode, we route to a harmless read‑only check to keep the demo deterministic.
+
+Examples:
+```bash
+# General small talk (no tool selection required)
+cargo run -p baml_client -- -q "hello"
+
+# Tool selection when relevant
+cargo run -p baml_client -- -q "What's vitalik.eth's balance?"
+```
+
 ### Acceptance Criteria
 
 - [x] Type-safe MCP tools with structured errors
