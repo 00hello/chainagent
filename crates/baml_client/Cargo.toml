@@ -16,4 +16,5 @@ anyhow.workspace = true
 async-trait.workspace = true
 domain = { path = "../domain" }
 dotenvy.workspace = true
+urlencoding = "2"
 

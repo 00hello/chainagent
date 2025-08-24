@@ -114,8 +114,8 @@ If it's casual conversation, just respond normally."#.to_string(),
             }
         }
 
-        // Fallback to keyword-based parsing for testing
-        self.fallback_keyword_parsing(response)
+        // No tool JSON found → treat as plain chat
+        anyhow::bail!("No tool JSON found")
     }
 
     fn parse_function_json(&self, function: &serde_json::Value) -> Result<BamlFunction> {
