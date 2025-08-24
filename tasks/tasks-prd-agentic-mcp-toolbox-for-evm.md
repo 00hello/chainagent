@@ -138,14 +138,14 @@
 
 ## 8.0 Conversation Memory in MCP (in-memory, volatile)
 
-- [ ] 8.1 Add in-memory session store with TTL and caps (per-session message cap; total sessions cap)
-- [ ] 8.2 Expose HTTP endpoints:
-  - [ ] 8.2.1 `GET /session/get?session_id=...` → returns prior messages/partial intent
-  - [ ] 8.2.2 `POST /session/append { session_id, role, content }` → appends a turn
+- [x] 8.1 Add in-memory session store with TTL and caps (per-session message cap; total sessions cap)
+- [x] 8.2 Expose HTTP endpoints:
+  - [x] 8.2.1 `GET /session/get?session_id=...` → returns prior messages/partial intent
+  - [x] 8.2.2 `POST /session/append { session_id, role, content }` → appends a turn
   - [ ] 8.2.3 (Optional) `POST/GET /session/partial_intent` for incomplete tool calls
-- [ ] 8.3 Client integration (one-shot):
-  - [ ] 8.3.1 Add `--session <id>` flag; fetch history at start; append user + assistant/tool at end
-  - [ ] 8.3.2 Store all turns (incl. small talk) with caps; summarize older non-critical chatter
+- [x] 8.3 Client integration (one-shot):
+  - [x] 8.3.1 Add `--session <id>` flag; fetch history at start; append user + assistant/tool at end
+  - [x] 8.3.2 Store all turns (incl. small talk) with caps; summarize older non-critical chatter
 
 
 ## 9.0 Model-Agnostic Controls

@@ -2,6 +2,7 @@ use anyhow::Result;
 use domain::*;
 use serde_json::{json, Value};
 use tracing::info;
+use crate::provider::ChatMessage;
 
 pub struct McpClient {
     server_url: String,
@@ -14,6 +15,37 @@ impl McpClient {
             server_url,
             http_client: reqwest::Client::new(),
         }
+    }
+
+    pub async fn session_get(&self, session_id: &str) -> Result<Vec<ChatMessage>> {
+        let url = format!("{}/session/get?session_id={}", self.server_url, urlencoding::encode(session_id));
+        let response = self.http_client.get(&url).send().await?;
+        let result: Value = response.json().await?;
+        let mut turns: Vec<ChatMessage> = Vec::new();
+        if let Some(arr) = result.get("turns").and_then(|v| v.as_array()) {
+            for t in arr {
+                let role = t.get("role").and_then(|v| v.as_str()).unwrap_or("").to_string();
+                let content = t.get("content").and_then(|v| v.as_str()).unwrap_or("").to_string();
+                if !role.is_empty() && !content.is_empty() {
+                    turns.push(ChatMessage { role, content });
+                }
+            }
+        }
+        Ok(turns)
+    }
+
+    pub async fn session_append(&self, session_id: &str, role: &str, content: &str) -> Result<()> {
+        let _ = self
+            .http_client
+            .post(&format!("{}/session/append", self.server_url))
+            .json(&json!({
+                "session_id": session_id,
+                "role": role,
+                "content": content,
+            }))
+            .send()
+            .await?;
+        Ok(())
     }
 
     pub async fn balance(&self, req: &BalanceRequest) -> Result<String> {

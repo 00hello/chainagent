@@ -4,9 +4,10 @@ mod toolbox;
 #[cfg(feature = "bonus_uniswap_v2")]
 mod uniswap_v2;
 mod external_api;
+mod sessions;
 
 use axum::{
-    extract::Json,
+    extract::{Json, Query, State},
     http::StatusCode,
     response::Json as ResponseJson,
     routing::post,
@@ -41,6 +42,7 @@ async fn main() -> anyhow::Result<()> {
     let adapter = FoundryAdapter::new(&rpc_url).await?;
     info!("FoundryAdapter initialized successfully");
     let toolbox = Arc::new(ServerToolbox::new(adapter));
+    let session_store = Arc::new(sessions::SessionStore::new(3600, 50, 1000));
     info!("ServerToolbox created");
     
     let app = Router::new()
@@ -49,7 +51,9 @@ async fn main() -> anyhow::Result<()> {
         .route("/erc20_balance_of", post(handle_erc20_balance))
         .route("/send", post(handle_send))
         .route("/token_lookup", post(handle_token_lookup))
-        .with_state(toolbox);
+        .route("/session/get", axum::routing::get(handle_session_get))
+        .route("/session/append", post(handle_session_append))
+        .with_state((toolbox, session_store));
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
     info!("Server listening on http://0.0.0.0:3000");
@@ -61,7 +65,7 @@ async fn main() -> anyhow::Result<()> {
 
 // HTTP Handlers
 async fn handle_balance(
-    axum::extract::State(toolbox): axum::extract::State<Arc<ServerToolbox>>,
+    State((toolbox, _sessions)): State<(Arc<ServerToolbox>, Arc<sessions::SessionStore>)>,
     Json(payload): Json<Value>,
 ) -> Result<ResponseJson<Value>, StatusCode> {
     let balance_in: BalanceIn = serde_json::from_value(payload).map_err(|_| StatusCode::BAD_REQUEST)?;
@@ -84,7 +88,7 @@ async fn handle_balance(
 }
 
 async fn handle_code(
-    axum::extract::State(toolbox): axum::extract::State<Arc<ServerToolbox>>,
+    State((toolbox, _sessions)): State<(Arc<ServerToolbox>, Arc<sessions::SessionStore>)>,
     Json(payload): Json<Value>,
 ) -> Result<ResponseJson<Value>, StatusCode> {
     let code_in: CodeIn = serde_json::from_value(payload).map_err(|_| StatusCode::BAD_REQUEST)?;
@@ -110,7 +114,7 @@ async fn handle_code(
 }
 
 async fn handle_erc20_balance(
-    axum::extract::State(toolbox): axum::extract::State<Arc<ServerToolbox>>,
+    State((toolbox, _sessions)): State<(Arc<ServerToolbox>, Arc<sessions::SessionStore>)>,
     Json(payload): Json<Value>,
 ) -> Result<ResponseJson<Value>, StatusCode> {
     let erc20_in: Erc20BalanceIn = serde_json::from_value(payload).map_err(|_| StatusCode::BAD_REQUEST)?;
@@ -133,7 +137,7 @@ async fn handle_erc20_balance(
 }
 
 async fn handle_send(
-    axum::extract::State(toolbox): axum::extract::State<Arc<ServerToolbox>>,
+    State((toolbox, _sessions)): State<(Arc<ServerToolbox>, Arc<sessions::SessionStore>)>,
     Json(payload): Json<Value>,
 ) -> Result<ResponseJson<Value>, StatusCode> {
     let send_in: SendIn = serde_json::from_value(payload).map_err(|_| StatusCode::BAD_REQUEST)?;
@@ -159,7 +163,7 @@ async fn handle_send(
 }
 
 async fn handle_token_lookup(
-    axum::extract::State(_toolbox): axum::extract::State<Arc<ServerToolbox>>,
+    State((_toolbox, _sessions)): State<(Arc<ServerToolbox>, Arc<sessions::SessionStore>)>,
     Json(payload): Json<Value>,
 ) -> Result<ResponseJson<Value>, StatusCode> {
     let token_in: TokenLookupIn = serde_json::from_value(payload).map_err(|_| StatusCode::BAD_REQUEST)?;
@@ -183,5 +187,34 @@ async fn handle_token_lookup(
             Err(StatusCode::INTERNAL_SERVER_ERROR)
         }
     }
+}
+
+#[derive(serde::Deserialize)]
+struct SessionGetQuery { session_id: String }
+
+async fn handle_session_get(
+    State((_toolbox, sessions)): State<(Arc<ServerToolbox>, Arc<sessions::SessionStore>)>,
+    Query(q): Query<SessionGetQuery>,
+) -> Result<ResponseJson<Value>, StatusCode> {
+    let data = sessions.get(&q.session_id);
+    let turns: Vec<Value> = data.turns
+        .iter()
+        .map(|t| json!({ "role": t.role, "content": t.content }))
+        .collect();
+    Ok(ResponseJson(json!({
+        "turns": turns,
+        "partial_intent": data.partial_intent,
+    })))
+}
+
+#[derive(serde::Deserialize)]
+struct SessionAppendIn { session_id: String, role: String, content: String }
+
+async fn handle_session_append(
+    State((_toolbox, sessions)): State<(Arc<ServerToolbox>, Arc<sessions::SessionStore>)>,
+    Json(payload): Json<SessionAppendIn>,
+) -> Result<ResponseJson<Value>, StatusCode> {
+    sessions.append(&payload.session_id, payload.role, payload.content);
+    Ok(ResponseJson(json!({ "ok": true })))
 }
 

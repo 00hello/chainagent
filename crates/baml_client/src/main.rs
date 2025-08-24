@@ -29,6 +29,10 @@ struct Cli {
     #[arg(short, long)]
     debug: bool,
 
+    /// Optional session id for conversational memory (stored on MCP server)
+    #[arg(long)]
+    session: Option<String>,
+
     /// Use mock provider instead of real LLM
     #[arg(short, long)]
     mock: bool,
@@ -61,6 +65,13 @@ async fn main() -> anyhow::Result<()> {
     info!("Processing query: {}", cli.query);
     info!("MCP server: {}", cli.server);
 
+    // 3.0 Optional: load session history
+    let mut history: Vec<provider::ChatMessage> = Vec::new();
+    if let Some(session_id) = &cli.session {
+        let client = McpClient::new(cli.server.clone());
+        if let Ok(h) = client.session_get(session_id).await { history = h; }
+    }
+
     // 3.1 Parse NL input and choose BAML function
     let function = if cli.mock {
         let provider = MockProvider::new();
@@ -79,7 +90,7 @@ async fn main() -> anyhow::Result<()> {
     info!("Function validated: {}", function.description());
 
     // 3.3 Invoke MCP server
-    let client = McpClient::new(cli.server);
+    let client = McpClient::new(cli.server.clone());
     let result = match function {
         BamlFunction::Chat(ref text) => {
             println!("Chat: {}", text);
@@ -121,6 +132,19 @@ async fn main() -> anyhow::Result<()> {
     // 3.4 Echo typed call and pretty-print JSON response
     println!("Function: {}", function.name());
     println!("Response: {}", serde_json::to_string_pretty(&result)?);
+
+    // 3.5 Append turns to session if enabled
+    if let Some(session_id) = &cli.session {
+        let client = McpClient::new(cli.server.clone());
+        // Append user input
+        let _ = client.session_append(session_id, "user", &cli.query).await;
+        // Append assistant/tool reply summary
+        let summary = match &function {
+            BamlFunction::Chat(text) => text.clone(),
+            _ => serde_json::to_string(&result).unwrap_or_default(),
+        };
+        let _ = client.session_append(session_id, "assistant", &summary).await;
+    }
 
     Ok(())
 }
