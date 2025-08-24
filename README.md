@@ -71,17 +71,60 @@ ANTHROPIC_API_KEY=sk-ant-...
 
 ### Tool registration and chat fallback
 
-- **Native tool registration**: The client registers available tools with the LLM using JSON schemas (name, description, input types). This lets the model choose a tool when appropriate, or abstain when the input is general conversation.
-- **No‑tool/small‑talk fallback**: If input doesn’t map to any tool (e.g., "hello"), the client responds without performing any state‑changing action. In mock mode, we route to a harmless read‑only check to keep the demo deterministic.
+- **Native tool registration**: The client registers available tools with the LLM using JSON schemas (name, description, input types). This lets the model choose a tool when appropriate.
+- **Plain chat fallback**: If the model does not return a tool call JSON, the client treats the output as Chat and performs no tool execution. This covers greetings and general conversation (e.g., "hello", "How are you?").
 
 Examples:
 ```bash
-# General small talk (no tool selection required)
+# General small talk (no tool execution)
 cargo run -p baml_client -- -q "hello"
+cargo run -p baml_client -- -q "How are you?"
 
 # Tool selection when relevant
 cargo run -p baml_client -- -q "What's vitalik.eth's balance?"
 ```
+
+### Chain‑neutral tools and dynamic registry
+
+- Internally the client exposes a chain‑neutral tool surface to the model:
+  - `GetNativeBalance`, `SendNative`, `GetFungibleBalance`, `GetCode`
+- A dynamic ToolRegistry assembles the tool list for the LLM at runtime (not hard‑coded), enabling future multi‑chain extension without changing parsing logic.
+
+### Clarifying questions and partial intent
+
+When the model selects a tool but omits required fields, the client responds with a brief clarifying message instead of failing, and embeds the incomplete tool call as a resumable block:
+
+```
+I need 'from', 'to', and 'amount_eth' to send. Please provide missing fields.
+[[PARTIAL_INTENT]]
+{"function": {"type": "SendNative", ...}}
+[[/PARTIAL_INTENT]]
+```
+
+Provide the missing values in the next turn (ideally with the same session id) and the flow will resume.
+
+### Session memory (one‑shot)
+
+Session memory is stored in the MCP server’s RAM so you can keep the CLI one‑shot while retaining context across invocations.
+
+```bash
+# Start server (separate terminal)
+RPC_URL=http://127.0.0.1:8545 cargo run -p mcp_server
+
+# Start a session and chat
+cargo run -p baml_client -- -q "hello" --session demo1
+
+# Follow‑up with the same session id
+cargo run -p baml_client -- -q "Send 0.1 ETH from Alice to Bob" --session demo1
+
+# Inspect stored turns (optional)
+curl -sS "http://localhost:3000/session/get?session_id=demo1" | jq .
+```
+
+Notes:
+- Volatile store (in‑memory): state is lost on server restart.
+- Defaults: TTL ~ 1 hour; per‑session cap ~ 50 turns; total sessions ~ 1000.
+- Endpoints for debugging/integration: `/session/get`, `/session/append`, `/session/partial_intent/get`, `/session/partial_intent/set`.
 
 ### Acceptance Criteria
 
