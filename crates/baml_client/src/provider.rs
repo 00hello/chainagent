@@ -147,6 +147,73 @@ impl ChatProvider for AnthropicProvider {
     }
 }
 
+pub struct OpenAIProvider {
+    api_key: String,
+    client: reqwest::Client,
+}
+
+impl OpenAIProvider {
+    pub fn new(api_key: String) -> Self {
+        Self { api_key, client: reqwest::Client::new() }
+    }
+}
+
+#[async_trait]
+impl ChatProvider for OpenAIProvider {
+    async fn chat(&self, request: ChatRequest) -> Result<ChatResponse> {
+        // Map ToolDef → OpenAI tool schema
+        let oai_tools = request.tools.unwrap_or_default().into_iter().map(|t| {
+            serde_json::json!({
+                "type": "function",
+                "function": {
+                    "name": t.name,
+                    "description": t.description,
+                    "parameters": t.input_schema
+                }
+            })
+        }).collect::<Vec<_>>();
+
+        let body = serde_json::json!({
+            "model": request.model,
+            "temperature": request.temperature.unwrap_or(0.0),
+            "messages": request.messages,
+            "tools": oai_tools,
+        });
+
+        let response = self.client
+            .post("https://api.openai.com/v1/chat/completions")
+            .bearer_auth(&self.api_key)
+            .json(&body)
+            .send()
+            .await?;
+
+        let result: serde_json::Value = response.json().await?;
+        // If tool call present, normalize to our JSON shape
+        if let Some(choice) = result["choices"].as_array().and_then(|arr| arr.first()) {
+            let msg = &choice["message"];
+            if let Some(tool_calls) = msg["tool_calls"].as_array() {
+                if let Some(tc) = tool_calls.first() {
+                    let name = tc["function"]["name"].as_str().unwrap_or("");
+                    let args = tc["function"]["arguments"].as_str().unwrap_or("{}");
+                    let parsed_args: serde_json::Value = serde_json::from_str(args).unwrap_or(serde_json::json!({}));
+                    let mut function_obj = serde_json::Map::new();
+                    function_obj.insert("type".to_string(), serde_json::Value::String(name.to_string()));
+                    if let Some(map) = parsed_args.as_object() {
+                        for (k, v) in map.iter() { function_obj.insert(k.clone(), v.clone()); }
+                    }
+                    let final_json = serde_json::json!({ "function": serde_json::Value::Object(function_obj) });
+                    return Ok(ChatResponse { content: final_json.to_string(), usage: None });
+                }
+            }
+            // Fallback: plain content
+            let text = msg["content"].as_str().unwrap_or("").to_string();
+            return Ok(ChatResponse { content: text, usage: None });
+        }
+
+        // Ultimate fallback
+        Ok(ChatResponse { content: "".to_string(), usage: None })
+    }
+}
 pub struct MockProvider {
     responses: std::collections::HashMap<String, String>,
 }

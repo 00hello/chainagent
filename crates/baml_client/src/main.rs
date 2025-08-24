@@ -11,7 +11,7 @@ mod baml_bindings;
 use baml::BamlFunction;
 use mcp::McpClient;
 use parser::NlParser;
-use provider::{MockProvider, AnthropicProvider};
+use provider::{MockProvider, AnthropicProvider, OpenAIProvider};
 
 #[derive(Parser)]
 #[command(name = "baml-client")]
@@ -44,6 +44,10 @@ struct Cli {
     /// Enable bonus tools (swap, token lookup, RAG); can also set BONUS=1
     #[arg(long, default_value_t = false)]
     enable_bonus: bool,
+
+    /// LLM model/provider selector (default: claude-sonnet-4-20250514)
+    #[arg(long, default_value = "claude-sonnet-4-20250514")]
+    model: String,
 }
 
 #[tokio::main]
@@ -78,11 +82,17 @@ async fn main() -> anyhow::Result<()> {
         let parser = NlParser::new(provider);
         parser.parse_query(&cli.query).await?
     } else {
-        let api_key = std::env::var("ANTHROPIC_API_KEY")
-            .expect("ANTHROPIC_API_KEY environment variable required");
-        let provider = AnthropicProvider::new(api_key);
-        let parser = NlParser::new(provider);
-        parser.parse_query(&cli.query).await?
+        if cli.model.starts_with("claude") {
+            let api_key = std::env::var("ANTHROPIC_API_KEY").expect("ANTHROPIC_API_KEY required");
+            let provider = AnthropicProvider::new(api_key);
+            let parser = NlParser::new(provider);
+            parser.parse_query(&cli.query).await?
+        } else {
+            let api_key = std::env::var("OPENAI_API_KEY").expect("OPENAI_API_KEY required for OpenAI models");
+            let provider = OpenAIProvider::new(api_key);
+            let parser = NlParser::new(provider);
+            parser.parse_query(&cli.query).await?
+        }
     };
     info!("Selected function: {}", function.name());
 

@@ -150,9 +150,9 @@
 
 ## 9.0 Model-Agnostic Controls
 
-- [ ] 9.1 Add `--model` flag and corresponding env to select model/provider at runtime
-- [ ] 9.2 Implement a second provider (e.g., `OpenAIProvider`) to prove adapter swap
-- [ ] 9.3 Map `ToolRegistry` → provider-specific tool payloads (Anthropic/OpenAI formats)
+- [x] 9.1 Add `--model` flag and corresponding env to select model/provider at runtime
+- [x] 9.2 Implement a second provider (e.g., `OpenAIProvider`) to prove adapter swap
+- [x] 9.3 Map `ToolRegistry` → provider-specific tool payloads (Anthropic/OpenAI formats)
 - [ ] 9.4 Feature flag for BAML validation; enable when available
 
 
