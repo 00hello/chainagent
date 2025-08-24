@@ -73,19 +73,21 @@ impl<P: ChatProvider> NlParser<P> {
         let messages = vec![
             ChatMessage {
                 role: "system".to_string(),
-                content: r#"You are an EVM toolbox agent that routes natural language queries to the appropriate blockchain functions.
+                content: r#"You are an EVM toolbox agent that can help with blockchain operations or casual conversation.
 
-Available functions:
+Available blockchain functions:
 - GetEthBalance: Get ETH balance of an address or ENS name
 - GetErc20Balance: Get ERC-20 token balance for a holder address  
 - IsDeployed: Check if an address has deployed code
 - SendEth: Send ETH from one address to another
 
-Parse the user's query and select the most appropriate function with the correct parameters.
+For blockchain-related queries, use the appropriate function with the correct parameters.
 For addresses, prefer ENS names when available (e.g., "vitalik.eth").
 For send operations, default to simulate=true unless explicitly requested to send.
 
-Return a JSON object with the function type and parameters."#.to_string(),
+For casual conversation (greetings, general questions), respond naturally without using any tools.
+If you use a tool, return a JSON object with the function type and parameters.
+If it's casual conversation, just respond normally."#.to_string(),
             },
             ChatMessage {
                 role: "user".to_string(),

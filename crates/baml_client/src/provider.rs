@@ -181,6 +181,15 @@ impl ChatProvider for MockProvider {
         // Simple keyword-based response for testing
         let last = &_request.messages.last().unwrap().content;
 
+        // First check for exact small talk matches
+        if last.trim().eq_ignore_ascii_case("hello") || last.trim().eq_ignore_ascii_case("hi") {
+            let content = self.responses.get("hello").unwrap();
+            return Ok(ChatResponse {
+                content: content.clone(),
+                usage: None,
+            });
+        }
+
         // Prefer code/deployed queries first → IsDeployed
         let lower = last.to_lowercase();
         if lower.contains("code") || lower.contains("deployed") {
@@ -208,20 +217,20 @@ impl ChatProvider for MockProvider {
             return Ok(ChatResponse { content: json.to_string(), usage: None });
         }
 
-        let content = if last.trim().eq_ignore_ascii_case("hello") || last.trim().eq_ignore_ascii_case("hi") {
-            self.responses.get("hello").unwrap()
-        } else if last.contains("send") {
+        // Fallback keyword matching
+        let content = if last.contains("send") {
             self.responses.get("send").unwrap()
         } else if last.contains("code") {
             self.responses.get("code").unwrap()
         } else if last.contains("balance") {
             self.responses.get("balance").unwrap()
         } else {
-            self.responses.get("balance").unwrap() // default
+            // For unknown queries, return a simple chat response instead of defaulting to balance
+            "Hello! I'm here to help with blockchain operations. You can ask me to check balances, send ETH, or check if addresses have deployed code."
         };
 
         Ok(ChatResponse {
-            content: content.clone(),
+            content: content.to_string(),
             usage: None,
         })
     }
