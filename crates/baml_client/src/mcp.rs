@@ -48,6 +48,23 @@ impl McpClient {
         Ok(())
     }
 
+    pub async fn session_partial_get(&self, session_id: &str) -> Result<Option<Value>> {
+        let url = format!("{}/session/partial_intent/get?session_id={}", self.server_url, urlencoding::encode(session_id));
+        let response = self.http_client.get(&url).send().await?;
+        let result: Value = response.json().await?;
+        Ok(result.get("partial_intent").cloned())
+    }
+
+    pub async fn session_partial_set(&self, session_id: &str, intent: Value) -> Result<()> {
+        let _ = self
+            .http_client
+            .post(&format!("{}/session/partial_intent/set", self.server_url))
+            .json(&json!({ "session_id": session_id, "intent": intent }))
+            .send()
+            .await?;
+        Ok(())
+    }
+
     pub async fn balance(&self, req: &BalanceRequest) -> Result<String> {
         let response = self
             .http_client

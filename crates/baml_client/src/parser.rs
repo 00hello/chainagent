@@ -13,6 +13,47 @@ impl<P: ChatProvider> NlParser<P> {
         Self { provider }
     }
 
+    pub async fn parse_query_with_history(&self, query: &str, history: &[ChatMessage]) -> Result<BamlFunction> {
+        info!("Parsing query with LLM (with history): {}", query);
+        let mut messages = vec![
+            ChatMessage {
+                role: "system".to_string(),
+                content: r#"You are an EVM toolbox agent that can help with blockchain operations or casual conversation.
+
+Available blockchain functions:
+- GetNativeBalance: Get native token balance of an address or name
+- GetFungibleBalance: Get fungible token balance for a holder address  
+- GetCode: Check if an address has deployed code
+- SendNative: Send native token from one address to another
+
+For blockchain-related queries, use the appropriate function with the correct parameters.
+For addresses, prefer ENS names when available (e.g., "vitalik.eth").
+For send operations, default to simulate=true unless explicitly requested to send.
+
+For casual conversation (greetings, general questions), respond naturally without using any tools.
+If you use a tool, return a JSON object with the function type and parameters.
+If it's casual conversation, just respond normally."#.to_string(),
+            },
+        ];
+        messages.extend_from_slice(history);
+        messages.push(ChatMessage { role: "user".to_string(), content: query.to_string() });
+
+        let request = ChatRequest {
+            messages,
+            model: "claude-sonnet-4-20250514".to_string(),
+            temperature: Some(0.0),
+            tools: Some(self.native_tools_schema()),
+        };
+
+        let response = self.provider.chat(request).await?;
+        debug!("LLM response: {}", response.content);
+
+        match self.parse_llm_response(&response.content) {
+            Ok(func) => Ok(func),
+            Err(_) => Ok(BamlFunction::Chat(response.content)),
+        }
+    }
+
     fn native_tools_schema(&self) -> Vec<crate::provider::ToolDef> {
         // Generate from ToolRegistry so tools can be added dynamically
         ToolRegistry::with_default_tools().tool_defs()
@@ -90,9 +131,12 @@ If it's casual conversation, just respond normally."#.to_string(),
         match function_type {
             // New chain-neutral name
             "GetNativeBalance" | "GetEthBalance" => {
-                let who = function.get("who")
-                    .and_then(|w| w.as_str())
-                    .ok_or_else(|| anyhow::anyhow!("Missing 'who' parameter"))?;
+                let who_opt = function.get("who").and_then(|w| w.as_str());
+                if who_opt.is_none() {
+                    let msg = format!("I need 'who' to get a balance. Please provide an address or ENS/name.\n[[PARTIAL_INTENT]]\n{}\n[[/PARTIAL_INTENT]]", function.to_string());
+                    return Ok(BamlFunction::Chat(msg));
+                }
+                let who = who_opt.unwrap();
                 let input = who.to_string();
                 let addr_or_ens = if input.ends_with(".eth") {
                     domain::AddressOrEns::from_ens(input)
@@ -105,21 +149,26 @@ If it's casual conversation, just respond normally."#.to_string(),
             }
             // New chain-neutral name
             "GetCode" | "IsDeployed" => {
-                let addr = function.get("addr")
-                    .and_then(|a| a.as_str())
-                    .ok_or_else(|| anyhow::anyhow!("Missing 'addr' parameter"))?;
+                let addr_opt = function.get("addr").and_then(|a| a.as_str());
+                if addr_opt.is_none() {
+                    let msg = format!("I need 'addr' to check code. Please provide an address.\n[[PARTIAL_INTENT]]\n{}\n[[/PARTIAL_INTENT]]", function.to_string());
+                    return Ok(BamlFunction::Chat(msg));
+                }
+                let addr = addr_opt.unwrap();
                 Ok(BamlFunction::Code(
                     domain::CodeRequest::new(domain::Address::new(addr.to_string()))
                 ))
             }
             // New chain-neutral name
             "GetFungibleBalance" | "GetErc20Balance" => {
-                let token = function.get("token")
-                    .and_then(|t| t.as_str())
-                    .ok_or_else(|| anyhow::anyhow!("Missing 'token' parameter"))?;
-                let holder = function.get("holder")
-                    .and_then(|h| h.as_str())
-                    .ok_or_else(|| anyhow::anyhow!("Missing 'holder' parameter"))?;
+                let token_opt = function.get("token").and_then(|t| t.as_str());
+                let holder_opt = function.get("holder").and_then(|h| h.as_str());
+                if token_opt.is_none() || holder_opt.is_none() {
+                    let msg = format!("I need 'token' and 'holder' to get token balance. Please provide both.\n[[PARTIAL_INTENT]]\n{}\n[[/PARTIAL_INTENT]]", function.to_string());
+                    return Ok(BamlFunction::Chat(msg));
+                }
+                let token = token_opt.unwrap();
+                let holder = holder_opt.unwrap();
                 Ok(BamlFunction::Erc20Balance(
                     domain::Erc20BalanceRequest::new(
                         domain::Address::new(token.to_string()),
@@ -129,15 +178,16 @@ If it's casual conversation, just respond normally."#.to_string(),
             }
             // New chain-neutral name
             "SendNative" | "SendEth" => {
-                let from = function.get("from")
-                    .and_then(|f| f.as_str())
-                    .ok_or_else(|| anyhow::anyhow!("Missing 'from' parameter"))?;
-                let to = function.get("to")
-                    .and_then(|t| t.as_str())
-                    .ok_or_else(|| anyhow::anyhow!("Missing 'to' parameter"))?;
-                let amount_eth = function.get("amount_eth")
-                    .and_then(|a| a.as_str())
-                    .ok_or_else(|| anyhow::anyhow!("Missing 'amount_eth' parameter"))?;
+                let from_opt = function.get("from").and_then(|f| f.as_str());
+                let to_opt = function.get("to").and_then(|t| t.as_str());
+                let amount_opt = function.get("amount_eth").and_then(|a| a.as_str());
+                if from_opt.is_none() || to_opt.is_none() || amount_opt.is_none() {
+                    let msg = format!("I need 'from', 'to', and 'amount_eth' to send. Please provide missing fields.\n[[PARTIAL_INTENT]]\n{}\n[[/PARTIAL_INTENT]]", function.to_string());
+                    return Ok(BamlFunction::Chat(msg));
+                }
+                let from = from_opt.unwrap();
+                let to = to_opt.unwrap();
+                let amount_eth = amount_opt.unwrap();
                 let simulate = function.get("simulate").and_then(|s| s.as_bool()).unwrap_or(true);
                 
                 Ok(BamlFunction::Send(

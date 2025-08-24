@@ -53,6 +53,8 @@ async fn main() -> anyhow::Result<()> {
         .route("/token_lookup", post(handle_token_lookup))
         .route("/session/get", axum::routing::get(handle_session_get))
         .route("/session/append", post(handle_session_append))
+        .route("/session/partial_intent/get", axum::routing::get(handle_session_partial_get))
+        .route("/session/partial_intent/set", post(handle_session_partial_set))
         .with_state((toolbox, session_store));
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
@@ -215,6 +217,28 @@ async fn handle_session_append(
     Json(payload): Json<SessionAppendIn>,
 ) -> Result<ResponseJson<Value>, StatusCode> {
     sessions.append(&payload.session_id, payload.role, payload.content);
+    Ok(ResponseJson(json!({ "ok": true })))
+}
+
+#[derive(serde::Deserialize)]
+struct SessionPartialGetQuery { session_id: String }
+
+async fn handle_session_partial_get(
+    State((_toolbox, sessions)): State<(Arc<ServerToolbox>, Arc<sessions::SessionStore>)>,
+    Query(q): Query<SessionPartialGetQuery>,
+) -> Result<ResponseJson<Value>, StatusCode> {
+    let intent = sessions.get_partial_intent(&q.session_id);
+    Ok(ResponseJson(json!({ "partial_intent": intent })))
+}
+
+#[derive(serde::Deserialize)]
+struct SessionPartialSetIn { session_id: String, intent: Value }
+
+async fn handle_session_partial_set(
+    State((_toolbox, sessions)): State<(Arc<ServerToolbox>, Arc<sessions::SessionStore>)>,
+    Json(payload): Json<SessionPartialSetIn>,
+) -> Result<ResponseJson<Value>, StatusCode> {
+    sessions.set_partial_intent(&payload.session_id, payload.intent);
     Ok(ResponseJson(json!({ "ok": true })))
 }
 

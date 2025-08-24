@@ -131,9 +131,9 @@
   - [x] 7.3.2 Map BAML functions → `ToolRegistry` invocations (by name)
   - [x] 7.3.3 Update README to clarify BAML function surfaces and mapping
 
-- [ ] 7.4 Clarifying questions and robustness
-  - [ ] 7.4.1 If tool args are missing/invalid, the client asks a clarifying question instead of failing
-  - [ ] 7.4.2 Store partial intent (in MCP) to resume once the user supplies missing fields
+- [x] 7.4 Clarifying questions and robustness
+  - [x] 7.4.1 If tool args are missing/invalid, the client asks a clarifying question instead of failing
+  - [x] 7.4.2 Store partial intent (in MCP) to resume once the user supplies missing fields
 
 
 ## 8.0 Conversation Memory in MCP (in-memory, volatile)
@@ -142,7 +142,7 @@
 - [x] 8.2 Expose HTTP endpoints:
   - [x] 8.2.1 `GET /session/get?session_id=...` → returns prior messages/partial intent
   - [x] 8.2.2 `POST /session/append { session_id, role, content }` → appends a turn
-  - [ ] 8.2.3 (Optional) `POST/GET /session/partial_intent` for incomplete tool calls
+  - [x] 8.2.3 (Optional) `POST/GET /session/partial_intent` for incomplete tool calls
 - [x] 8.3 Client integration (one-shot):
   - [x] 8.3.1 Add `--session <id>` flag; fetch history at start; append user + assistant/tool at end
   - [x] 8.3.2 Store all turns (incl. small talk) with caps; summarize older non-critical chatter
