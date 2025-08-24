@@ -95,7 +95,7 @@ Return a JSON object with the function type and parameters."#.to_string(),
 
         let request = ChatRequest {
             messages,
-            model: "claude-3-sonnet-20240229".to_string(),
+            model: "claude-sonnet-4-20250514".to_string(),
             temperature: Some(0.0),
             // Pass native tool schemas so the LLM can select tools or decline
             tools: Some(self.native_tools_schema()),

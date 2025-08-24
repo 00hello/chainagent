@@ -62,19 +62,41 @@ impl AnthropicProvider {
 #[async_trait]
 impl ChatProvider for AnthropicProvider {
     async fn chat(&self, request: ChatRequest) -> Result<ChatResponse> {
+        // Separate system message from user messages
+        let (system_message, user_messages): (Option<String>, Vec<ChatMessage>) = {
+            let mut system = None;
+            let mut users = Vec::new();
+            
+            for msg in request.messages {
+                if msg.role == "system" {
+                    system = Some(msg.content);
+                } else {
+                    users.push(msg);
+                }
+            }
+            (system, users)
+        };
+
+        let mut body = serde_json::json!({
+            "model": request.model,
+            "max_tokens": 1000,
+            "messages": user_messages,
+            "temperature": request.temperature.unwrap_or(0.0),
+            // Native tool registration (if provided)
+            "tools": request.tools.unwrap_or_default(),
+        });
+
+        // Add system message as separate parameter if present
+        if let Some(system) = system_message {
+            body["system"] = serde_json::Value::String(system);
+        }
+
         let response = self
             .client
             .post("https://api.anthropic.com/v1/messages")
             .header("x-api-key", &self.api_key)
             .header("anthropic-version", "2023-06-01")
-            .json(&serde_json::json!({
-                "model": request.model,
-                "max_tokens": 1000,
-                "messages": request.messages,
-                "temperature": request.temperature.unwrap_or(0.0),
-                // Native tool registration (if provided)
-                "tools": request.tools.unwrap_or_default(),
-            }))
+            .json(&body)
             .send()
             .await?;
 
