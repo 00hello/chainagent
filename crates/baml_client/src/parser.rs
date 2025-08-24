@@ -6,11 +6,16 @@ use crate::tools::ToolRegistry;
 
 pub struct NlParser<P: ChatProvider> {
     provider: P,
+    baml_validation_enabled: bool,
 }
 
 impl<P: ChatProvider> NlParser<P> {
     pub fn new(provider: P) -> Self {
-        Self { provider }
+        Self { provider, baml_validation_enabled: false }
+    }
+
+    pub fn new_with_baml(provider: P, enabled: bool) -> Self {
+        Self { provider, baml_validation_enabled: enabled }
     }
 
     pub async fn parse_query_with_history(&self, query: &str, history: &[ChatMessage]) -> Result<BamlFunction> {
@@ -123,9 +128,11 @@ If it's casual conversation, just respond normally."#.to_string(),
             .and_then(|t| t.as_str())
             .ok_or_else(|| anyhow::anyhow!("Missing function type"))?;
 
-        // Prefer BAML bindings (schema-first) to validate and map
-        if let Ok(mapped) = crate::baml_bindings::validate_and_to_baml_function(function_type, function) {
-            return Ok(mapped);
+        // Prefer BAML bindings (schema-first) to validate and map when enabled
+        if self.baml_validation_enabled {
+            if let Ok(mapped) = crate::baml_bindings::validate_and_to_baml_function(function_type, function) {
+                return Ok(mapped);
+            }
         }
 
         match function_type {

@@ -61,6 +61,8 @@ RPC_URL=http://127.0.0.1:8545
 ANTHROPIC_API_KEY=sk-ant-...
 # Optional if using OpenAI models
 OPENAI_API_KEY=sk-openai-...
+# Optional: enable schema-first validation
+ENABLE_BAML=1
 ```
 
 ### Tool Guardrails
@@ -145,6 +147,20 @@ cargo run -p baml_client -- -q "What's vitalik.eth's balance?" --model claude-so
 # OpenAI model
 export OPENAI_API_KEY=sk-openai-...
 cargo run -p baml_client -- -q "hello" --model gpt-4o-mini
+```
+
+### BAML validation (feature flag)
+
+- Default: off. The client relies on robust runtime checks and clarifying questions.
+- Enable to validate tool JSON via schema-first bindings before invoking tools.
+
+Options:
+- CLI: `--enable-baml`
+- Env: `ENABLE_BAML=1`
+
+Example:
+```bash
+ENABLE_BAML=1 cargo run -p baml_client -- -q "balance vitalik.eth"
 ```
 
 Notes:

@@ -11,7 +11,7 @@ mod baml_bindings;
 use baml::BamlFunction;
 use mcp::McpClient;
 use parser::NlParser;
-use provider::{MockProvider, AnthropicProvider, OpenAIProvider};
+use provider::{MockProvider, AnthropicProvider};
 
 #[derive(Parser)]
 #[command(name = "baml-client")]
@@ -45,9 +45,9 @@ struct Cli {
     #[arg(long, default_value_t = false)]
     enable_bonus: bool,
 
-    /// LLM model/provider selector (default: claude-sonnet-4-20250514)
-    #[arg(long, default_value = "claude-sonnet-4-20250514")]
-    model: String,
+    /// Enable BAML validation (schema-first). Can also set ENABLE_BAML=1
+    #[arg(long, default_value_t = false)]
+    enable_baml: bool,
 }
 
 #[tokio::main]
@@ -66,6 +66,13 @@ async fn main() -> anyhow::Result<()> {
         info!("Bonus features enabled");
     }
 
+    // BAML validation flag/env
+    let baml_env = std::env::var("ENABLE_BAML").ok().map(|v| v == "1").unwrap_or(false);
+    let baml_enabled = cli.enable_baml || baml_env;
+    if baml_enabled {
+        info!("BAML validation enabled");
+    }
+
     info!("Processing query: {}", cli.query);
     info!("MCP server: {}", cli.server);
 
@@ -79,20 +86,14 @@ async fn main() -> anyhow::Result<()> {
     // 3.1 Parse NL input and choose BAML function
     let function = if cli.mock {
         let provider = MockProvider::new();
-        let parser = NlParser::new(provider);
+        let parser = NlParser::new_with_baml(provider, baml_enabled);
         parser.parse_query(&cli.query).await?
     } else {
-        if cli.model.starts_with("claude") {
-            let api_key = std::env::var("ANTHROPIC_API_KEY").expect("ANTHROPIC_API_KEY required");
-            let provider = AnthropicProvider::new(api_key);
-            let parser = NlParser::new(provider);
-            parser.parse_query(&cli.query).await?
-        } else {
-            let api_key = std::env::var("OPENAI_API_KEY").expect("OPENAI_API_KEY required for OpenAI models");
-            let provider = OpenAIProvider::new(api_key);
-            let parser = NlParser::new(provider);
-            parser.parse_query(&cli.query).await?
-        }
+        let api_key = std::env::var("ANTHROPIC_API_KEY")
+            .expect("ANTHROPIC_API_KEY environment variable required");
+        let provider = AnthropicProvider::new(api_key);
+        let parser = NlParser::new_with_baml(provider, baml_enabled);
+        parser.parse_query(&cli.query).await?
     };
     info!("Selected function: {}", function.name());
 
