@@ -32,7 +32,16 @@ cp .env.example .env
 export RPC_URL=http://127.0.0.1:8545  # Default Anvil URL
 ```
 
-4. **Run golden tasks**:
+4. **Start the MCP server**:
+```bash
+# Standard server (recommended)
+RPC_URL=http://127.0.0.1:8545 cargo run -p mcp_server
+
+# Optional: enable bonus feature(s)
+RPC_URL=http://127.0.0.1:8545 cargo run -p mcp_server --features bonus_uniswap_v2
+```
+
+5. **Run golden tasks**:
 ```bash
 # Get ETH balance
 cargo run -p baml_client -- -q "What's vitalik.eth's balance?"
