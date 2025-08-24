@@ -158,8 +158,8 @@
 
 ## 10.0 Cleanup
 
-- [ ] 10.1 Remove unused `BamlTool` infrastructure and dead code paths
-- [ ] 10.2 Decide fate of `token_lookup_address` (integrate via bonus API tool or remove)
-- [ ] 10.3 Address outstanding warnings (unused constants/helpers) or gate behind features
+- [x] 10.1 Remove unused `BamlTool` infrastructure and dead code paths
+- [x] 10.2 Decide fate of `token_lookup_address` (integrate via bonus API tool or remove)
+- [x] 10.3 Address outstanding warnings (unused constants/helpers) or gate behind features
 
 

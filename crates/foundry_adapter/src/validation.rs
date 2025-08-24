@@ -8,6 +8,7 @@ pub fn normalize(address: &str) -> String {
 }
 
 /// Validate and normalize an address with EIP-55 checksum
+#[allow(dead_code)]
 pub fn validate_and_normalize_address(address: &str) -> Result<String, String> {
     // Parse the address
     let addr = EthAddress::from_str(address)
@@ -28,11 +29,13 @@ pub fn validate_and_normalize_address(address: &str) -> Result<String, String> {
 }
 
 /// Check if an address is a valid EIP-55 checksum address
+#[allow(dead_code)]
 pub fn is_valid_checksum_address(address: &str) -> bool {
     validate_and_normalize_address(address).is_ok()
 }
 
 /// Extract address from various formats (with or without 0x prefix)
+#[allow(dead_code)]
 pub fn parse_address(input: &str) -> Result<EthAddress, String> {
     let clean_input = if input.starts_with("0x") {
         input.to_string()
