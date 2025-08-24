@@ -133,8 +133,14 @@ Return a JSON object with the function type and parameters."#.to_string(),
                 let who = function.get("who")
                     .and_then(|w| w.as_str())
                     .ok_or_else(|| anyhow::anyhow!("Missing 'who' parameter"))?;
+                let input = who.to_string();
+                let addr_or_ens = if input.ends_with(".eth") {
+                    domain::AddressOrEns::from_ens(input)
+                } else {
+                    domain::AddressOrEns::from_address(input)
+                };
                 Ok(BamlFunction::Balance(
-                    domain::BalanceRequest::new(domain::AddressOrEns::from_ens(who.to_string()))
+                    domain::BalanceRequest::new(addr_or_ens)
                 ))
             }
             "IsDeployed" => {
@@ -191,8 +197,13 @@ Return a JSON object with the function type and parameters."#.to_string(),
         if response_lower.contains("balance") && response_lower.contains("eth") {
             let who = self.extract_address_or_ens(response)?;
             debug!("Parsed balance request for: {}", who);
+            let addr_or_ens = if who.ends_with(".eth") {
+                domain::AddressOrEns::from_ens(who)
+            } else {
+                domain::AddressOrEns::from_address(who)
+            };
             return Ok(BamlFunction::Balance(
-                domain::BalanceRequest::new(domain::AddressOrEns::from_ens(who))
+                domain::BalanceRequest::new(addr_or_ens)
             ));
         }
 
@@ -296,6 +307,16 @@ mod tests {
         assert!(matches!(function, BamlFunction::Code(_)));
         if let BamlFunction::Code(req) = function {
             assert_eq!(req.addr().as_str(), "0x0000000000000000000000000000000000000000");
+        }
+
+        // New: Balance tool selection by 0x address
+        let function = parser.parse_query("What's 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266's balance?").await.unwrap();
+        assert!(matches!(function, BamlFunction::Balance(_)));
+        if let BamlFunction::Balance(req) = function {
+            match req.who() {
+                domain::AddressOrEns::Address(addr) => assert_eq!(addr.as_str(), "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"),
+                _ => panic!("Expected 0x address"),
+            }
         }
 
         // Golden prompt 3: Send ETH

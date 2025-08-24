@@ -102,12 +102,45 @@ impl ChatProvider for AnthropicProvider {
 
         let result: serde_json::Value = response.json().await?;
         
+        // Prefer native tool_use blocks if present and convert them into the
+        // function JSON our parser already understands: { "function": { "type": name, ...input } }
+        if let Some(content_blocks) = result.get("content").and_then(|c| c.as_array()) {
+            if let Some(tool_block) = content_blocks.iter().find(|b| b.get("type").and_then(|t| t.as_str()) == Some("tool_use")) {
+                let name = tool_block.get("name").and_then(|n| n.as_str()).unwrap_or("");
+                let input = tool_block.get("input").cloned().unwrap_or(serde_json::json!({}));
+                let function_json = serde_json::json!({
+                    "function": {
+                        "type": name,
+                        // Merge input fields directly under function
+                    }
+                });
+                // Manually merge input object into function_json["function"]
+                let mut function_obj = function_json["function"].as_object().cloned().unwrap_or_default();
+                if let Some(map) = input.as_object() {
+                    for (k, v) in map.iter() { function_obj.insert(k.clone(), v.clone()); }
+                }
+                let final_json = serde_json::json!({ "function": serde_json::Value::Object(function_obj) });
+
+                return Ok(ChatResponse {
+                    content: final_json.to_string(),
+                    usage: Some(Usage {
+                        prompt_tokens: result["usage"]["input_tokens"].as_u64().unwrap_or(0) as u32,
+                        completion_tokens: result["usage"]["output_tokens"].as_u64().unwrap_or(0) as u32,
+                        total_tokens: result["usage"]["input_tokens"].as_u64().unwrap_or(0) as u32
+                            + result["usage"]["output_tokens"].as_u64().unwrap_or(0) as u32,
+                    }),
+                });
+            }
+        }
+
+        // Fallback: treat first text block as plain chat
+        let text = result["content"][0]["text"].as_str().unwrap_or("").to_string();
         Ok(ChatResponse {
-            content: result["content"][0]["text"].as_str().unwrap_or("").to_string(),
+            content: text,
             usage: Some(Usage {
                 prompt_tokens: result["usage"]["input_tokens"].as_u64().unwrap_or(0) as u32,
                 completion_tokens: result["usage"]["output_tokens"].as_u64().unwrap_or(0) as u32,
-                total_tokens: result["usage"]["input_tokens"].as_u64().unwrap_or(0) as u32 
+                total_tokens: result["usage"]["input_tokens"].as_u64().unwrap_or(0) as u32
                     + result["usage"]["output_tokens"].as_u64().unwrap_or(0) as u32,
             }),
         })
@@ -147,6 +180,34 @@ impl ChatProvider for MockProvider {
     async fn chat(&self, _request: ChatRequest) -> Result<ChatResponse> {
         // Simple keyword-based response for testing
         let last = &_request.messages.last().unwrap().content;
+
+        // Prefer code/deployed queries first → IsDeployed
+        let lower = last.to_lowercase();
+        if lower.contains("code") || lower.contains("deployed") {
+            if let Some(addr) = extract_first_address(last) {
+                let json = serde_json::json!({
+                    "function": { "type": "IsDeployed", "addr": addr }
+                });
+                return Ok(ChatResponse { content: json.to_string(), usage: None });
+            }
+        }
+
+        // If the query includes a 0x address, default to GetEthBalance for testing
+        if let Some(addr) = extract_first_address(last) {
+            let json = serde_json::json!({
+                "function": { "type": "GetEthBalance", "who": addr }
+            });
+            return Ok(ChatResponse { content: json.to_string(), usage: None });
+        }
+
+        // If the query includes an ENS-like token, pass it as who (balance)
+        if let Some(ens) = extract_first_ens(last) {
+            let json = serde_json::json!({
+                "function": { "type": "GetEthBalance", "who": ens }
+            });
+            return Ok(ChatResponse { content: json.to_string(), usage: None });
+        }
+
         let content = if last.trim().eq_ignore_ascii_case("hello") || last.trim().eq_ignore_ascii_case("hi") {
             self.responses.get("hello").unwrap()
         } else if last.contains("send") {
@@ -164,4 +225,33 @@ impl ChatProvider for MockProvider {
             usage: None,
         })
     }
+}
+
+// Helpers for MockProvider only
+fn extract_first_address(text: &str) -> Option<String> {
+    for word in text.split_whitespace() {
+        let trimmed = word.trim_matches(|c: char|
+            c == '?' || c == '"' || c == '\'' || c == ',' || c == '.' || c == ')' || c == '(' || c == ':' || c == ';'
+        );
+        let mut candidate = trimmed.to_string();
+        if candidate.ends_with("'s") || candidate.ends_with("’s") {
+            candidate.truncate(candidate.len().saturating_sub(2));
+        }
+        if candidate.starts_with("0x") && candidate.len() == 42 { return Some(candidate); }
+    }
+    None
+}
+
+fn extract_first_ens(text: &str) -> Option<String> {
+    for word in text.split_whitespace() {
+        let trimmed = word.trim_matches(|c: char|
+            c == '?' || c == '"' || c == '\'' || c == ',' || c == '.' || c == ')' || c == '(' || c == ':' || c == ';'
+        );
+        let mut candidate = trimmed.to_string();
+        if candidate.ends_with("'s") || candidate.ends_with("’s") {
+            candidate.truncate(candidate.len().saturating_sub(2));
+        }
+        if candidate.ends_with(".eth") { return Some(candidate); }
+    }
+    None
 }

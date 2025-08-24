@@ -14,7 +14,7 @@ This workspace implements an agentic MCP toolbox for EVM operations with:
 1. **Start a mainnet fork (Anvil)**:
 ```bash
 # Fork mainnet at latest block
-anvil --fork-url https://eth-mainnet.g.alchemy.com/v2/YOUR_KEY --fork-block-number latest
+anvil --fork-url https://eth-mainnet.g.alchemy.com/v2/YOUR_KEY
 
 # Or fork at specific block for reproducible testing
 anvil --fork-url https://eth-mainnet.g.alchemy.com/v2/YOUR_KEY --fork-block-number 19000000
