@@ -126,10 +126,10 @@
   - [x] 7.2.2 Add `ToolRegistry` to register tools at runtime
   - [x] 7.2.3 Wire `ToolRegistry` into client so `ChatRequest.tools` is generated dynamically
 
-- [ ] 7.3 BAML at the edge (schema-first)
-  - [ ] 7.3.1 Integrate BAML-generated bindings; validate inputs before invoking MCP
-  - [ ] 7.3.2 Map BAML functions → `ToolRegistry` invocations (by name)
-  - [ ] 7.3.3 Update README to clarify BAML function surfaces and mapping
+- [x] 7.3 BAML at the edge (schema-first)
+  - [x] 7.3.1 Integrate BAML-generated bindings; validate inputs before invoking MCP
+  - [x] 7.3.2 Map BAML functions → `ToolRegistry` invocations (by name)
+  - [x] 7.3.3 Update README to clarify BAML function surfaces and mapping
 
 - [ ] 7.4 Clarifying questions and robustness
   - [ ] 7.4.1 If tool args are missing/invalid, the client asks a clarifying question instead of failing

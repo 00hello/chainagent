@@ -82,6 +82,11 @@ If it's casual conversation, just respond normally."#.to_string(),
             .and_then(|t| t.as_str())
             .ok_or_else(|| anyhow::anyhow!("Missing function type"))?;
 
+        // Prefer BAML bindings (schema-first) to validate and map
+        if let Ok(mapped) = crate::baml_bindings::validate_and_to_baml_function(function_type, function) {
+            return Ok(mapped);
+        }
+
         match function_type {
             // New chain-neutral name
             "GetNativeBalance" | "GetEthBalance" => {
