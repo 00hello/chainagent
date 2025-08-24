@@ -1,9 +1,8 @@
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
-use anyhow::Result;
-use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct CachedAbi {
     pub abi: String,
     pub cached_at: Instant,
@@ -11,6 +10,7 @@ pub struct CachedAbi {
 }
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct CachedContract {
     pub address: String,
     pub name: String,
@@ -18,6 +18,7 @@ pub struct CachedContract {
     pub cached_at: Instant,
 }
 
+#[allow(dead_code)]
 pub struct LruCache {
     abis: HashMap<String, CachedAbi>,
     contracts: HashMap<String, CachedContract>,
@@ -25,6 +26,7 @@ pub struct LruCache {
     ttl: Duration,
 }
 
+#[allow(dead_code)]
 impl LruCache {
     pub fn new(max_size: usize, ttl_seconds: u64) -> Self {
         Self {
@@ -101,6 +103,7 @@ pub struct EtherscanClient {
     base_url: String,
 }
 
+#[allow(dead_code)]
 impl EtherscanClient {
     pub fn new(api_key: String) -> Self {
         Self {
@@ -109,7 +112,7 @@ impl EtherscanClient {
         }
     }
 
-    pub async fn get_contract_abi(&self, address: &str) -> Result<Option<String>> {
+    pub async fn get_contract_abi(&self, address: &str) -> anyhow::Result<Option<String>> {
         let url = format!(
             "{}?module=contract&action=getabi&address={}&apikey={}",
             self.base_url, address, self.api_key
@@ -125,7 +128,7 @@ impl EtherscanClient {
         }
     }
 
-    pub async fn get_contract_name(&self, address: &str) -> Result<Option<String>> {
+    pub async fn get_contract_name(&self, address: &str) -> anyhow::Result<Option<String>> {
         let url = format!(
             "{}?module=contract&action=getcontractcreation&contractaddresses={}&apikey={}",
             self.base_url, address, self.api_key
@@ -149,12 +152,12 @@ impl EtherscanClient {
 
 // Interface for future L2Beat-style discovery
 pub trait ContractDiscovery {
-    async fn get_contract_info(&self, address: &str) -> Result<Option<CachedContract>>;
-    async fn get_abi(&self, address: &str) -> Result<Option<String>>;
+    async fn get_contract_info(&self, address: &str) -> anyhow::Result<Option<CachedContract>>;
+    async fn get_abi(&self, address: &str) -> anyhow::Result<Option<String>>;
 }
 
 impl ContractDiscovery for EtherscanClient {
-    async fn get_contract_info(&self, address: &str) -> Result<Option<CachedContract>> {
+    async fn get_contract_info(&self, address: &str) -> anyhow::Result<Option<CachedContract>> {
         let name = self.get_contract_name(address).await?;
         let abi = self.get_contract_abi(address).await?;
         
@@ -170,7 +173,7 @@ impl ContractDiscovery for EtherscanClient {
         }
     }
 
-    async fn get_abi(&self, address: &str) -> Result<Option<String>> {
+    async fn get_abi(&self, address: &str) -> anyhow::Result<Option<String>> {
         self.get_contract_abi(address).await
     }
 }

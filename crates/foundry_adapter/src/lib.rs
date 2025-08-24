@@ -2,7 +2,7 @@ mod error;
 mod constants;
 mod validation;
 mod cache;
-use anyhow::anyhow;
+// use anyhow::anyhow; // reserved for future error conversions
 use error::AdapterError;
 use constants::*;
 
@@ -29,6 +29,7 @@ use ethers_signers::{LocalWallet, Signer};
 use std::collections::HashMap;
 use std::str::FromStr;
 
+#[allow(dead_code)]
 pub fn is_checksum_address(_addr: &str) -> bool {
     // TODO: implement EIP-55 validation
     true
@@ -36,7 +37,6 @@ pub fn is_checksum_address(_addr: &str) -> bool {
 
 #[derive(Clone, Debug)]
 pub struct FoundryAdapter {
-    rpc_url: String,
     provider: Provider<Http>,
     gas_cap: u64,
     expected_chain_id: Option<u64>,
@@ -46,7 +46,7 @@ pub struct FoundryAdapter {
 impl FoundryAdapter {
     pub async fn new(rpc_url: impl Into<String>) -> Result<Self, AdapterError> {
         let rpc_url = rpc_url.into();
-        let provider = Provider::<Http>::try_from(rpc_url.clone()).map_err(|e| AdapterError::Other(e.into()))?;
+        let provider = Provider::<Http>::try_from(rpc_url).map_err(|e| AdapterError::Other(e.into()))?;
         let mut known_wallets = HashMap::new();
         let accounts = get_anvil_accounts();
         let private_keys = vec![
@@ -62,7 +62,7 @@ impl FoundryAdapter {
             known_wallets.insert(normalize(&addr.to_string()), wallet);
         }
         
-        Ok(Self { rpc_url, provider, gas_cap: DEFAULT_GAS_CAP, expected_chain_id: None, known_wallets })
+        Ok(Self { provider, gas_cap: DEFAULT_GAS_CAP, expected_chain_id: None, known_wallets })
     }
 
     pub fn with_expected_chain_id(mut self, chain_id: u64) -> Self {
@@ -169,6 +169,7 @@ impl FoundryAdapter {
     }
 }
 
+#[allow(dead_code)]
 pub fn placeholder_adapter() {}
 
 fn normalize(addr: &str) -> String { validation::normalize(addr) }

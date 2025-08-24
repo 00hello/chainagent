@@ -10,6 +10,7 @@ pub struct NlParser<P: ChatProvider> {
 }
 
 impl<P: ChatProvider> NlParser<P> {
+    #[allow(dead_code)]
     pub fn new(provider: P) -> Self {
         Self { provider, baml_validation_enabled: false }
     }
@@ -18,6 +19,7 @@ impl<P: ChatProvider> NlParser<P> {
         Self { provider, baml_validation_enabled: enabled }
     }
 
+    #[allow(dead_code)]
     pub async fn parse_query_with_history(&self, query: &str, history: &[ChatMessage]) -> Result<BamlFunction> {
         info!("Parsing query with LLM (with history): {}", query);
         let mut messages = vec![
@@ -210,6 +212,7 @@ If it's casual conversation, just respond normally."#.to_string(),
         }
     }
 
+    #[allow(dead_code)]
     fn fallback_keyword_parsing(&self, response: &str) -> Result<BamlFunction> {
         let response_lower = response.to_lowercase();
         
@@ -262,6 +265,7 @@ If it's casual conversation, just respond normally."#.to_string(),
         anyhow::bail!("Could not parse response: {}", response)
     }
 
+    #[allow(dead_code)]
     fn extract_address_or_ens(&self, query: &str) -> Result<String> {
         // Simple regex-like extraction
         if query.contains("vitalik") {
@@ -273,6 +277,7 @@ If it's casual conversation, just respond normally."#.to_string(),
         anyhow::bail!("No address or ENS found in query")
     }
 
+    #[allow(dead_code)]
     fn extract_address(&self, query: &str) -> Result<String> {
         // Extract first 0x-prefixed string
         let words: Vec<&str> = query.split_whitespace().collect();
@@ -284,6 +289,7 @@ If it's casual conversation, just respond normally."#.to_string(),
         anyhow::bail!("No valid address found in query")
     }
 
+    #[allow(dead_code)]
     fn extract_token_and_holder(&self, _query: &str) -> Result<(String, String)> {
         // For now, return USDC and a default holder
         Ok((
@@ -292,6 +298,7 @@ If it's casual conversation, just respond normally."#.to_string(),
         ))
     }
 
+    #[allow(dead_code)]
     fn extract_send_params(&self, _query: &str) -> Result<(String, String, String)> {
         // For now, return default Anvil accounts and 0.1 ETH
         Ok((

@@ -4,6 +4,7 @@ use std::{collections::HashMap, sync::RwLock, time::{Duration, Instant}};
 pub struct ChatTurn {
     pub role: String,
     pub content: String,
+    #[allow(dead_code)]
     pub at: Instant,
 }
 

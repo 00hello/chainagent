@@ -1,6 +1,7 @@
 use anyhow::Result;
 use crate::baml::BamlFunction;
 
+#[allow(dead_code)]
 pub trait Tool: Send + Sync {
     fn name(&self) -> &'static str;
     fn description(&self) -> &'static str;
@@ -8,6 +9,7 @@ pub trait Tool: Send + Sync {
     fn to_baml_function(&self, input: &serde_json::Value) -> Result<BamlFunction>;
 }
 
+#[allow(dead_code)]
 pub struct ToolRegistry {
     tools: Vec<Box<dyn Tool>>,    
 }
@@ -37,6 +39,7 @@ impl ToolRegistry {
         }).collect()
     }
 
+    #[allow(dead_code)]
     pub fn to_baml_function(&self, tool_name: &str, input: &serde_json::Value) -> Result<BamlFunction> {
         // Find by exact name
         if let Some(tool) = self.tools.iter().find(|t| t.name() == tool_name) {

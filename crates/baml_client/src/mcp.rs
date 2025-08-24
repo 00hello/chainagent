@@ -48,6 +48,7 @@ impl McpClient {
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub async fn session_partial_get(&self, session_id: &str) -> Result<Option<Value>> {
         let url = format!("{}/session/partial_intent/get?session_id={}", self.server_url, urlencoding::encode(session_id));
         let response = self.http_client.get(&url).send().await?;
@@ -55,6 +56,7 @@ impl McpClient {
         Ok(result.get("partial_intent").cloned())
     }
 
+    #[allow(dead_code)]
     pub async fn session_partial_set(&self, session_id: &str, intent: Value) -> Result<()> {
         let _ = self
             .http_client
@@ -143,8 +145,8 @@ impl McpClient {
         ))
     }
 
-    // Bonus: external API token lookup
-    #[allow(dead_code)]
+    // Bonus: external API token lookup (kept for BONUS workflows)
+    #[cfg(feature = "bonus_uniswap_v2")]
     pub async fn token_lookup_address(&self, symbol: &str, chain: &str) -> Result<Option<String>> {
         let response = self
             .http_client

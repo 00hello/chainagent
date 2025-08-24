@@ -77,10 +77,10 @@ async fn main() -> anyhow::Result<()> {
     info!("MCP server: {}", cli.server);
 
     // 3.0 Optional: load session history
-    let mut history: Vec<provider::ChatMessage> = Vec::new();
+    let mut _history: Vec<provider::ChatMessage> = Vec::new();
     if let Some(session_id) = &cli.session {
         let client = McpClient::new(cli.server.clone());
-        if let Ok(h) = client.session_get(session_id).await { history = h; }
+        if let Ok(h) = client.session_get(session_id).await { _history = h; }
     }
 
     // 3.1 Parse NL input and choose BAML function
