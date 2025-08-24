@@ -64,22 +64,37 @@ impl FoundryAdapter {
     }
 
     pub async fn resolve_address_or_ens(&self, input: &AddressOrEns) -> Result<Address, AdapterError> {
+        eprintln!("DEBUG: resolve_address_or_ens called with: {:?}", input);
         match input {
             AddressOrEns::Address(addr) => {
-                let parsed = EthAddress::from_str(addr.as_str()).map_err(|_| AdapterError::AddrParse(addr.as_str().into()))?;
-                Ok(Address::new(parsed.to_string()))
+                eprintln!("DEBUG: Parsing address: {}", addr.as_str());
+                let parsed = EthAddress::from_str(addr.as_str()).map_err(|e| {
+                    eprintln!("DEBUG: Address parsing failed: {} -> {:?}", addr.as_str(), e);
+                    AdapterError::AddrParse(addr.as_str().into())
+                })?;
+                eprintln!("DEBUG: Address parsed successfully: {}", parsed);
+                // Use checksum format to avoid shortened display strings like 0x0000…0000
+                let checksummed = ethers_core::utils::to_checksum(&parsed, None);
+                Ok(Address::new(checksummed))
             }
             AddressOrEns::Ens(name) => {
+                eprintln!("DEBUG: Resolving ENS: {}", name.as_str());
                 let resolved: EthAddress = self.provider.resolve_name(name.as_str()).await?;
-                Ok(Address::new(resolved.to_string()))
+                eprintln!("DEBUG: ENS resolved to: {}", resolved);
+                let checksummed = ethers_core::utils::to_checksum(&resolved, None);
+                Ok(Address::new(checksummed))
             }
         }
     }
 
     pub async fn get_balance(&self, req: &BalanceRequest) -> Result<String, AdapterError> {
+        eprintln!("DEBUG: get_balance called for: {:?}", req.who());
         let addr = self.resolve_address_or_ens(req.who()).await?;
+        eprintln!("DEBUG: Address resolved to: {}", addr.as_str());
         let addr = EthAddress::from_str(addr.as_str()).map_err(|_| AdapterError::AddrParse(addr.as_str().into()))?;
+        eprintln!("DEBUG: About to call provider.get_balance for: {}", addr);
         let bal: U256 = self.provider.get_balance(addr, None).await?;
+        eprintln!("DEBUG: Balance retrieved: {}", bal);
         Ok(bal.to_string())
     }
 
