@@ -42,6 +42,8 @@ struct Cli {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    // Load .env so CLI runs without exporting variables in the shell
+    let _ = dotenvy::dotenv();
     let cli = Cli::parse();
 
     // Initialize logging

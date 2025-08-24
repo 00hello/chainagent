@@ -23,6 +23,8 @@ use tracing::{info, error};
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     println!("DEBUG: Server starting...");
+    // Load .env first so RPC_URL and others are available without exporting in shell
+    let _ = dotenvy::dotenv();
     tracing_subscriber::fmt::init();
     println!("DEBUG: Tracing initialized");
     

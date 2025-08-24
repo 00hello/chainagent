@@ -20,6 +20,7 @@ clap.workspace = true
 async-trait.workspace = true
 reqwest.workspace = true
 axum = "0.7"
+dotenvy.workspace = true
 
 [dev-dependencies]
 httpmock = "0.7"
