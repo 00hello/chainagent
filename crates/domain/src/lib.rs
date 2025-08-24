@@ -246,6 +246,25 @@ pub trait Toolbox: Send + Sync {
     async fn send(&self, req: SendRequest) -> anyhow::Result<TxResult>;
 }
 
+/// Chain-agnostic provider interface for agent tools.
+///
+/// This mirrors `Toolbox` but uses neutral names so different chains (EVM, Solana, etc.)
+/// can implement the same surface without leaking chain-specific terminology.
+#[async_trait]
+pub trait BlockchainProvider: Send + Sync {
+    /// Get native token balance for an address or resolved name (e.g., ETH/SOL).
+    async fn get_native_balance(&self, req: BalanceRequest) -> anyhow::Result<BalanceResponse>;
+
+    /// Return simple code/deployment info for an address (or equivalent per chain).
+    async fn get_code(&self, req: CodeRequest) -> anyhow::Result<CodeResponse>;
+
+    /// Get fungible token balance for a holder (ERC-20/SPL, etc.).
+    async fn get_fungible_balance(&self, req: Erc20BalanceRequest) -> anyhow::Result<Erc20BalanceResponse>;
+
+    /// Send native token with optional simulation/fork controls (where supported).
+    async fn send_native(&self, req: SendRequest) -> anyhow::Result<TxResult>;
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -16,8 +16,8 @@ impl<P: ChatProvider> NlParser<P> {
         // Describe tools as simple JSON schemas so providers like Claude/OpenAI can select them
         vec![
             crate::provider::ToolDef {
-                name: "GetEthBalance".to_string(),
-                description: "Get ETH balance of an address or ENS name".to_string(),
+                name: "GetNativeBalance".to_string(),
+                description: "Get native token balance of an address or name".to_string(),
                 input_schema: serde_json::json!({
                     "type": "object",
                     "properties": { "who": {"type": "string"} },
@@ -25,8 +25,8 @@ impl<P: ChatProvider> NlParser<P> {
                 }),
             },
             crate::provider::ToolDef {
-                name: "IsDeployed".to_string(),
-                description: "Check if an address has deployed code".to_string(),
+                name: "GetCode".to_string(),
+                description: "Get code/deployment status for an address".to_string(),
                 input_schema: serde_json::json!({
                     "type": "object",
                     "properties": { "addr": {"type": "string"} },
@@ -34,8 +34,8 @@ impl<P: ChatProvider> NlParser<P> {
                 }),
             },
             crate::provider::ToolDef {
-                name: "GetErc20Balance".to_string(),
-                description: "Get ERC-20 token balance for holder".to_string(),
+                name: "GetFungibleBalance".to_string(),
+                description: "Get fungible token balance for holder".to_string(),
                 input_schema: serde_json::json!({
                     "type": "object",
                     "properties": {
@@ -46,8 +46,8 @@ impl<P: ChatProvider> NlParser<P> {
                 }),
             },
             crate::provider::ToolDef {
-                name: "SendEth".to_string(),
-                description: "Send ETH from one address to another".to_string(),
+                name: "SendNative".to_string(),
+                description: "Send native token from one address to another".to_string(),
                 input_schema: serde_json::json!({
                     "type": "object",
                     "properties": {
@@ -72,10 +72,10 @@ impl<P: ChatProvider> NlParser<P> {
                 content: r#"You are an EVM toolbox agent that can help with blockchain operations or casual conversation.
 
 Available blockchain functions:
-- GetEthBalance: Get ETH balance of an address or ENS name
-- GetErc20Balance: Get ERC-20 token balance for a holder address  
-- IsDeployed: Check if an address has deployed code
-- SendEth: Send ETH from one address to another
+- GetNativeBalance: Get native token balance of an address or name
+- GetFungibleBalance: Get fungible token balance for a holder address  
+- GetCode: Check if an address has deployed code
+- SendNative: Send native token from one address to another
 
 For blockchain-related queries, use the appropriate function with the correct parameters.
 For addresses, prefer ENS names when available (e.g., "vitalik.eth").
@@ -127,7 +127,8 @@ If it's casual conversation, just respond normally."#.to_string(),
             .ok_or_else(|| anyhow::anyhow!("Missing function type"))?;
 
         match function_type {
-            "GetEthBalance" => {
+            // New chain-neutral name
+            "GetNativeBalance" | "GetEthBalance" => {
                 let who = function.get("who")
                     .and_then(|w| w.as_str())
                     .ok_or_else(|| anyhow::anyhow!("Missing 'who' parameter"))?;
@@ -141,7 +142,8 @@ If it's casual conversation, just respond normally."#.to_string(),
                     domain::BalanceRequest::new(addr_or_ens)
                 ))
             }
-            "IsDeployed" => {
+            // New chain-neutral name
+            "GetCode" | "IsDeployed" => {
                 let addr = function.get("addr")
                     .and_then(|a| a.as_str())
                     .ok_or_else(|| anyhow::anyhow!("Missing 'addr' parameter"))?;
@@ -149,7 +151,8 @@ If it's casual conversation, just respond normally."#.to_string(),
                     domain::CodeRequest::new(domain::Address::new(addr.to_string()))
                 ))
             }
-            "GetErc20Balance" => {
+            // New chain-neutral name
+            "GetFungibleBalance" | "GetErc20Balance" => {
                 let token = function.get("token")
                     .and_then(|t| t.as_str())
                     .ok_or_else(|| anyhow::anyhow!("Missing 'token' parameter"))?;
@@ -163,7 +166,8 @@ If it's casual conversation, just respond normally."#.to_string(),
                     )
                 ))
             }
-            "SendEth" => {
+            // New chain-neutral name
+            "SendNative" | "SendEth" => {
                 let from = function.get("from")
                     .and_then(|f| f.as_str())
                     .ok_or_else(|| anyhow::anyhow!("Missing 'from' parameter"))?;

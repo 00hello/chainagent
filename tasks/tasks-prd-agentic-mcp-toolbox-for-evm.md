@@ -7,7 +7,7 @@
 - `crates/mcp_server/src/main.rs` - MCP server entry; tool registration and provider wiring.
 - `crates/mcp_server/src/toolbox.rs` - Tool implementations (`balance`, `code`, `send`, `erc20_balanceOf`).
 - `crates/mcp_server/src/dto.rs` - DTOs for MCP request/response payloads; explicit conversions to/from domain.
-- `crates/mcp_server/src/facade.rs` - Facade layer orchestrating adapter/domain; centralizes business logic.
+- `crates/mcp_server/src/facade.rs` - Facade layer orchestrating adapter/domain; centralizing business logic.
 - `crates/mcp_server/src/uniswap_v2.rs` - Optional: Uniswap V2 `swapExactETHForTokens` tool implementation (behind feature flag).
 - `crates/mcp_server/src/external_api.rs` - Optional: external API clients (DefiLlama/0x/Brave) for token address discovery.
 - `crates/baml_client/src/main.rs` - CLI REPL; NL → BAML function mapping → MCP calls; pretty printing.
@@ -113,5 +113,53 @@
   - [x] 6.4 Feature flagging and docs
     - [x] 6.4.1 Add env/CLI flag `--enable-bonus` (or `BONUS=1`) to enable swap, API lookup, and RAG tools at runtime.
     - [x] 6.4.2 Document flags in README and demo script; keep default build/runtime without bonus features.
+
+## 7.0 Roadmap: Architecture, Memory, Model-Agnostic (aligned with PRD)
+
+- [ ] 7.1 Architecture: trait-based, chain-agnostic provider
+  - [x] 7.1.1 Introduce `BlockchainProvider` trait (get_native_balance, send_native, get_fungible_balance, get_code)
+  - [x] 7.1.2 Implement `EthereumProvider` by adapting `foundry_adapter`
+  - [x] 7.1.3 Define chain-neutral tool names: `GetNativeBalance`, `SendNative`, `GetFungibleBalance`, `GetCode`
+
+- [ ] 7.2 Dynamic tools: registry instead of hardcoded schemas
+  - [ ] 7.2.1 Add `Tool` trait with `name`, `description`, `input_schema`, `invoke`
+  - [ ] 7.2.2 Add `ToolRegistry` to register tools at runtime
+  - [ ] 7.2.3 Wire `ToolRegistry` into client so `ChatRequest.tools` is generated dynamically
+
+- [ ] 7.3 BAML at the edge (schema-first)
+  - [ ] 7.3.1 Integrate BAML-generated bindings; validate inputs before invoking MCP
+  - [ ] 7.3.2 Map BAML functions → `ToolRegistry` invocations (by name)
+  - [ ] 7.3.3 Update README to clarify BAML function surfaces and mapping
+
+- [ ] 7.4 Clarifying questions and robustness
+  - [ ] 7.4.1 If tool args are missing/invalid, the client asks a clarifying question instead of failing
+  - [ ] 7.4.2 Store partial intent (in MCP) to resume once the user supplies missing fields
+
+
+## 8.0 Conversation Memory in MCP (in-memory, volatile)
+
+- [ ] 8.1 Add in-memory session store with TTL and caps (per-session message cap; total sessions cap)
+- [ ] 8.2 Expose HTTP endpoints:
+  - [ ] 8.2.1 `GET /session/get?session_id=...` → returns prior messages/partial intent
+  - [ ] 8.2.2 `POST /session/append { session_id, role, content }` → appends a turn
+  - [ ] 8.2.3 (Optional) `POST/GET /session/partial_intent` for incomplete tool calls
+- [ ] 8.3 Client integration (one-shot):
+  - [ ] 8.3.1 Add `--session <id>` flag; fetch history at start; append user + assistant/tool at end
+  - [ ] 8.3.2 Store all turns (incl. small talk) with caps; summarize older non-critical chatter
+
+
+## 9.0 Model-Agnostic Controls
+
+- [ ] 9.1 Add `--model` flag and corresponding env to select model/provider at runtime
+- [ ] 9.2 Implement a second provider (e.g., `OpenAIProvider`) to prove adapter swap
+- [ ] 9.3 Map `ToolRegistry` → provider-specific tool payloads (Anthropic/OpenAI formats)
+- [ ] 9.4 Feature flag for BAML validation; enable when available
+
+
+## 10.0 Cleanup
+
+- [ ] 10.1 Remove unused `BamlTool` infrastructure and dead code paths
+- [ ] 10.2 Decide fate of `token_lookup_address` (integrate via bonus API tool or remove)
+- [ ] 10.3 Address outstanding warnings (unused constants/helpers) or gate behind features
 
 

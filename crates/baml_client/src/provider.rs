@@ -156,7 +156,7 @@ impl MockProvider {
         let mut responses = std::collections::HashMap::new();
         responses.insert(
             "balance".to_string(),
-            r#"{"function": {"type": "GetEthBalance", "who": "vitalik.eth"}}"#.to_string(),
+            r#"{"function": {"type": "GetNativeBalance", "who": "vitalik.eth"}}"#.to_string(),
         );
         responses.insert(
             "hello".to_string(),
@@ -201,10 +201,10 @@ impl ChatProvider for MockProvider {
             }
         }
 
-        // If the query includes a 0x address, default to GetEthBalance for testing
+        // If the query includes a 0x address, default to GetNativeBalance for testing
         if let Some(addr) = extract_first_address(last) {
             let json = serde_json::json!({
-                "function": { "type": "GetEthBalance", "who": addr }
+                "function": { "type": "GetNativeBalance", "who": addr }
             });
             return Ok(ChatResponse { content: json.to_string(), usage: None });
         }
@@ -212,7 +212,7 @@ impl ChatProvider for MockProvider {
         // If the query includes an ENS-like token, pass it as who (balance)
         if let Some(ens) = extract_first_ens(last) {
             let json = serde_json::json!({
-                "function": { "type": "GetEthBalance", "who": ens }
+                "function": { "type": "GetNativeBalance", "who": ens }
             });
             return Ok(ChatResponse { content: json.to_string(), usage: None });
         }

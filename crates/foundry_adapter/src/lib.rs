@@ -6,7 +6,19 @@ use anyhow::anyhow;
 use error::AdapterError;
 use constants::*;
 
-use domain::{Address, AddressOrEns, BalanceRequest, CodeRequest, Erc20BalanceRequest, SendRequest, TxResult};
+use domain::{
+    Address,
+    AddressOrEns,
+    BalanceRequest,
+    BalanceResponse,
+    BlockchainProvider,
+    CodeRequest,
+    CodeResponse,
+    Erc20BalanceRequest,
+    Erc20BalanceResponse,
+    SendRequest,
+    TxResult,
+};
 use ethers_contract::Contract;
 use ethers_core::abi::parse_abi_str;
 use ethers_core::types::{transaction::eip2718::TypedTransaction, Address as EthAddress, Bytes, TransactionRequest, U256};
@@ -160,3 +172,26 @@ impl FoundryAdapter {
 pub fn placeholder_adapter() {}
 
 fn normalize(addr: &str) -> String { validation::normalize(addr) }
+
+#[async_trait::async_trait]
+impl BlockchainProvider for FoundryAdapter {
+    async fn get_native_balance(&self, req: BalanceRequest) -> anyhow::Result<BalanceResponse> {
+        let wei = self.get_balance(&req).await.map_err(|e| anyhow::Error::from(e))?;
+        Ok(BalanceResponse::new(wei))
+    }
+
+    async fn get_code(&self, req: CodeRequest) -> anyhow::Result<CodeResponse> {
+        let (deployed, bytecode_len) = self.get_code_len(&req).await.map_err(|e| anyhow::Error::from(e))?;
+        Ok(CodeResponse::new(deployed, bytecode_len))
+    }
+
+    async fn get_fungible_balance(&self, req: Erc20BalanceRequest) -> anyhow::Result<Erc20BalanceResponse> {
+        let amount = self.erc20_balance_of(&req).await.map_err(|e| anyhow::Error::from(e))?;
+        Ok(Erc20BalanceResponse::new(amount))
+    }
+
+    async fn send_native(&self, req: SendRequest) -> anyhow::Result<TxResult> {
+        let tx = self.send_eth(&req).await.map_err(|e| anyhow::Error::from(e))?;
+        Ok(tx)
+    }
+}
