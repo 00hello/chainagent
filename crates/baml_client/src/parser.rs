@@ -1,19 +1,15 @@
 use anyhow::Result;
 use tracing::{debug, info};
-use crate::baml::{BamlFunction, BamlTool};
+use crate::baml::BamlFunction;
 use crate::provider::{ChatProvider, ChatMessage, ChatRequest};
 
 pub struct NlParser<P: ChatProvider> {
     provider: P,
-    tools: Vec<BamlTool>,
 }
 
 impl<P: ChatProvider> NlParser<P> {
     pub fn new(provider: P) -> Self {
-        Self {
-            provider,
-            tools: crate::baml::available_tools(),
-        }
+        Self { provider }
     }
 
     fn native_tools_schema(&self) -> Vec<crate::provider::ToolDef> {

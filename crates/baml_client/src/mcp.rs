@@ -95,6 +95,7 @@ impl McpClient {
     }
 
     // Bonus: external API token lookup
+    #[allow(dead_code)]
     pub async fn token_lookup_address(&self, symbol: &str, chain: &str) -> Result<Option<String>> {
         let response = self
             .http_client

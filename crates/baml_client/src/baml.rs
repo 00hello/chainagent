@@ -40,6 +40,7 @@ pub struct BamlTool {
     pub function: BamlFunction,
 }
 
+#[allow(dead_code)]
 impl BamlTool {
     pub fn balance(who: String) -> Self {
         Self {
@@ -85,6 +86,7 @@ impl BamlTool {
     }
 }
 
+#[allow(dead_code)]
 pub fn available_tools() -> Vec<BamlTool> {
     vec![
         BamlTool::balance("vitalik.eth".to_string()),
