@@ -17,6 +17,7 @@ async-trait.workspace = true
 domain = { path = "../domain" }
 dotenvy.workspace = true
 urlencoding = "2"
+baml-client-cecilia.workspace = true
 
 [features]
 # No-op feature to align with shared cfg names and silence unexpected cfg warnings
