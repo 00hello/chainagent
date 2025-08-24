@@ -5,6 +5,7 @@ mod baml;
 mod mcp;
 mod parser;
 mod provider;
+mod tools;
 
 use baml::BamlFunction;
 use mcp::McpClient;

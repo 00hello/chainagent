@@ -2,6 +2,7 @@ use anyhow::Result;
 use tracing::{debug, info};
 use crate::baml::BamlFunction;
 use crate::provider::{ChatProvider, ChatMessage, ChatRequest};
+use crate::tools::ToolRegistry;
 
 pub struct NlParser<P: ChatProvider> {
     provider: P,
@@ -13,53 +14,8 @@ impl<P: ChatProvider> NlParser<P> {
     }
 
     fn native_tools_schema(&self) -> Vec<crate::provider::ToolDef> {
-        // Describe tools as simple JSON schemas so providers like Claude/OpenAI can select them
-        vec![
-            crate::provider::ToolDef {
-                name: "GetNativeBalance".to_string(),
-                description: "Get native token balance of an address or name".to_string(),
-                input_schema: serde_json::json!({
-                    "type": "object",
-                    "properties": { "who": {"type": "string"} },
-                    "required": ["who"],
-                }),
-            },
-            crate::provider::ToolDef {
-                name: "GetCode".to_string(),
-                description: "Get code/deployment status for an address".to_string(),
-                input_schema: serde_json::json!({
-                    "type": "object",
-                    "properties": { "addr": {"type": "string"} },
-                    "required": ["addr"],
-                }),
-            },
-            crate::provider::ToolDef {
-                name: "GetFungibleBalance".to_string(),
-                description: "Get fungible token balance for holder".to_string(),
-                input_schema: serde_json::json!({
-                    "type": "object",
-                    "properties": {
-                        "token": {"type": "string"},
-                        "holder": {"type": "string"}
-                    },
-                    "required": ["token", "holder"],
-                }),
-            },
-            crate::provider::ToolDef {
-                name: "SendNative".to_string(),
-                description: "Send native token from one address to another".to_string(),
-                input_schema: serde_json::json!({
-                    "type": "object",
-                    "properties": {
-                        "from": {"type": "string"},
-                        "to": {"type": "string"},
-                        "amount_eth": {"type": "string"},
-                        "simulate": {"type": "boolean"}
-                    },
-                    "required": ["from", "to", "amount_eth"],
-                }),
-            },
-        ]
+        // Generate from ToolRegistry so tools can be added dynamically
+        ToolRegistry::with_default_tools().tool_defs()
     }
 
     pub async fn parse_query(&self, query: &str) -> Result<BamlFunction> {

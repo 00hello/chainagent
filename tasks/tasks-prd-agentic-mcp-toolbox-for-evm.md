@@ -116,15 +116,15 @@
 
 ## 7.0 Roadmap: Architecture, Memory, Model-Agnostic (aligned with PRD)
 
-- [ ] 7.1 Architecture: trait-based, chain-agnostic provider
+- [x] 7.1 Architecture: trait-based, chain-agnostic provider
   - [x] 7.1.1 Introduce `BlockchainProvider` trait (get_native_balance, send_native, get_fungible_balance, get_code)
   - [x] 7.1.2 Implement `EthereumProvider` by adapting `foundry_adapter`
   - [x] 7.1.3 Define chain-neutral tool names: `GetNativeBalance`, `SendNative`, `GetFungibleBalance`, `GetCode`
 
-- [ ] 7.2 Dynamic tools: registry instead of hardcoded schemas
-  - [ ] 7.2.1 Add `Tool` trait with `name`, `description`, `input_schema`, `invoke`
-  - [ ] 7.2.2 Add `ToolRegistry` to register tools at runtime
-  - [ ] 7.2.3 Wire `ToolRegistry` into client so `ChatRequest.tools` is generated dynamically
+- [x] 7.2 Dynamic tools: registry instead of hardcoded schemas
+  - [x] 7.2.1 Add `Tool` trait with `name`, `description`, `input_schema`, `invoke`
+  - [x] 7.2.2 Add `ToolRegistry` to register tools at runtime
+  - [x] 7.2.3 Wire `ToolRegistry` into client so `ChatRequest.tools` is generated dynamically
 
 - [ ] 7.3 BAML at the edge (schema-first)
   - [ ] 7.3.1 Integrate BAML-generated bindings; validate inputs before invoking MCP
