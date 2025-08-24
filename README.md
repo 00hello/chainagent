@@ -59,6 +59,8 @@ Create `.env` file:
 ```
 RPC_URL=http://127.0.0.1:8545
 ANTHROPIC_API_KEY=sk-ant-...
+# Optional if using OpenAI models
+OPENAI_API_KEY=sk-openai-...
 ```
 
 ### Tool Guardrails
@@ -125,6 +127,28 @@ Notes:
 - Volatile store (in‑memory): state is lost on server restart.
 - Defaults: TTL ~ 1 hour; per‑session cap ~ 50 turns; total sessions ~ 1000.
 - Endpoints for debugging/integration: `/session/get`, `/session/append`, `/session/partial_intent/get`, `/session/partial_intent/set`.
+
+### Model selection (Anthropic/OpenAI)
+
+- Default model: `claude-sonnet-4-20250514`. No flag required.
+- Use `--model` to select a different model. If it starts with `claude`, Anthropic is used; otherwise OpenAI is used.
+
+Examples:
+```bash
+# Default (Anthropic Claude) – no flag needed
+export ANTHROPIC_API_KEY=sk-ant-...
+cargo run -p baml_client -- -q "hello"
+
+# Explicit Anthropic model
+cargo run -p baml_client -- -q "What's vitalik.eth's balance?" --model claude-sonnet-4-20250514
+
+# OpenAI model
+export OPENAI_API_KEY=sk-openai-...
+cargo run -p baml_client -- -q "hello" --model gpt-4o-mini
+```
+
+Notes:
+- Anthropic path uses native tools; OpenAI path uses function tools; both normalize back to the same tool JSON for the parser.
 
 ### Acceptance Criteria
 
