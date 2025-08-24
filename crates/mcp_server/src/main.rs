@@ -22,7 +22,9 @@ use tracing::{info, error};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    println!("DEBUG: Server starting...");
     tracing_subscriber::fmt::init();
+    println!("DEBUG: Tracing initialized");
     
     let bonus_enabled = std::env::var("BONUS").ok().map(|v| v == "1").unwrap_or(false);
     if bonus_enabled { 
@@ -33,8 +35,11 @@ async fn main() -> anyhow::Result<()> {
     
     // Initialize adapter with RPC URL from env or default to Anvil
     let rpc_url = std::env::var("RPC_URL").unwrap_or_else(|_| "http://127.0.0.1:8545".to_string());
+    info!("Connecting to RPC at: {}", rpc_url);
     let adapter = FoundryAdapter::new(&rpc_url).await?;
+    info!("FoundryAdapter initialized successfully");
     let toolbox = Arc::new(ServerToolbox::new(adapter));
+    info!("ServerToolbox created");
     
     let app = Router::new()
         .route("/balance", post(handle_balance))
